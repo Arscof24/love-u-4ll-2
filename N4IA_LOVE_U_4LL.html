@@ -1,0 +1,3133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>N4IA_LOVE_U_4LL</title>
+<style>
+/* Local copies of every font, so the page needs nothing from other servers. */
+@font-face { font-family: 'DM Mono'; src: url('assets/fonts/dm-mono-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'DM Mono'; src: url('assets/fonts/dm-mono-latin-500-normal.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+/* Page basics */
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+img { max-width: 100%; }
+@font-face {
+  font-family: 'W98Title';
+  src: url('assets/fonts/MSW98UI-Bold.otf') format('opentype');
+  font-weight: 400 900;
+  font-display: block;
+}
+/* Layout: one centered column. Score strip on top, a 16:9 screen with a faint CRT scanline in the middle, controls below.
+   Single dark look by design: the eight greens are sampled from the character sprite and the ruined-overpass backdrop. */
+:root {
+  --g0: #050c06;
+  --g1: #0e1b0e;
+  --g2: #1b2e17;
+  --g3: #304b27;
+  --g4: #517a3b;
+  --g5: #7fae4e;
+  --g6: #b4dc6c;
+  --g7: #e4f6a6;
+  --font-display: 'W98Title', 'Courier New', monospace;
+  --font-ui: 'DM Mono', ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { height: 100%; }
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--g0);
+  color: var(--g7);
+  font-family: var(--font-ui);
+  padding-block: 20px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid;
+  place-items: center;
+}
+.shell { width: 100%; max-width: 960px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+.hud { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 24px; }
+h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(20px, 4.6vw, 32px);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  line-height: 1;
+  color: var(--g6);
+  text-shadow: 0 0 12px rgba(180, 220, 108, 0.35);
+}
+.stats { margin: 0; display: flex; gap: 22px; }
+.stats div { text-align: right; }
+.stats dt { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--g5); }
+.stats dd {
+  margin: 2px 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(18px, 4vw, 26px);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.stats dd.hi { color: var(--g6); }
+
+.stage {
+  position: relative;
+  container-type: inline-size;
+  border: 2px solid var(--g3);
+  box-shadow: 0 0 0 4px var(--g1), 0 0 40px rgba(81, 122, 59, 0.25);
+  background: var(--g0);
+  overflow: hidden;
+  touch-action: manipulation;
+}
+.stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(to bottom, rgba(5, 12, 6, 0) 0 2px, rgba(5, 12, 6, 0.16) 2px 3px),
+    radial-gradient(ellipse at center, rgba(5, 12, 6, 0) 60%, rgba(5, 12, 6, 0.55) 100%);
+}
+canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  max-width: 100%;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  align-items: safe center;
+  justify-items: center;
+  overflow-y: auto;
+  padding: 3cqw;
+  background: rgba(5, 12, 6, 0.7);
+  text-align: center;
+}
+.panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(6px, 1.6cqw, 16px);
+  max-width: 36em;
+  min-width: 0;
+}
+.panel h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(16px, 5cqw, 38px);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-wrap: balance;
+  color: var(--g6);
+}
+.panel p {
+  margin: 0;
+  max-width: 34em;
+  font-size: clamp(11px, 1.9cqw, 15px);
+  line-height: 1.55;
+  color: var(--g7);
+  text-wrap: balance;
+}
+.ov-stats { display: flex; flex-wrap: wrap; justify-content: center; gap: clamp(10px, 3cqw, 32px); }
+.ov-stats span { display: block; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--g5); }
+.ov-stats b { font-family: var(--font-display); font-size: clamp(14px, 3cqw, 24px); font-variant-numeric: tabular-nums; }
+
+button { font: inherit; cursor: pointer; }
+button:focus-visible, a:focus-visible { outline: 3px solid var(--g7); outline-offset: 3px; }
+.ov-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: clamp(8px, 1.6cqw, 14px); }
+a.primary { display: inline-block; text-decoration: none; }
+#ovBtn { transition: transform 0.14s ease-out; }
+.primary.alt { background: transparent; color: var(--g6); box-shadow: inset 0 0 0 2px var(--g6), 0 4px 0 var(--g3); }
+.primary.alt:active { box-shadow: inset 0 0 0 2px var(--g6), 0 1px 0 var(--g3); }
+.primary {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(12px, 2.4cqw, 18px);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--g6);
+  color: var(--g0);
+  border: 0;
+  padding: 0.8em 1.5em;
+  box-shadow: 0 4px 0 var(--g3);
+}
+.primary:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--g3); }
+
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 20px; }
+.btns { display: flex; gap: 8px; }
+.ghost {
+  background: transparent;
+  color: var(--g5);
+  border: 1px solid var(--g3);
+  padding: 8px 12px;
+  font-size: 13px;
+}
+.ghost:hover:not(:disabled) { border-color: var(--g6); color: var(--g7); }
+.ghost:disabled, .ghost[aria-disabled="true"] { opacity: 0.4; cursor: default; pointer-events: none; }
+a.ghost { display: inline-block; text-decoration: none; }
+.ov-tip { margin: 0; max-width: 36em; font-size: clamp(11px, 1.7cqw, 14px); line-height: 1.5; color: var(--g5); white-space: pre-line; }
+.keys { margin: 0; font-size: 12px; line-height: 1.8; color: var(--g5); min-width: 0; }
+kbd {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  color: var(--g7);
+  border: 1px solid var(--g3);
+  border-radius: 3px;
+  padding: 1px 6px;
+}
+/* ---- header link, badges, continue ---- */
+.brand { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-width: 0; }
+.site-link {
+  font-family: var(--font-display); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--g0); background: var(--g6); text-decoration: none; padding: 4px 10px; box-shadow: 0 3px 0 var(--g3);
+}
+.site-link:hover { background: var(--g7); }
+.site-link:focus-visible { outline: 3px solid var(--g7); outline-offset: 3px; }
+.ov-wrap { display: flex; align-items: center; justify-content: center; gap: 2.5cqw; width: 100%; height: 100%; min-width: 0; }
+.ov-wrap .panel { flex: 1 1 auto; min-width: 0; }
+.badge-wall {
+  flex: 0 0 30%; max-height: 100%; display: flex; flex-direction: column; gap: 1cqw; padding: 1.4cqw;
+  background: rgba(5, 12, 6, 0.6); border: 2px solid var(--g3); overflow: auto; text-align: left;
+}
+.badge-wall h3 {
+  margin: 0; display: flex; justify-content: space-between; gap: 8px;
+  font-family: var(--font-display); font-weight: 700; font-size: clamp(11px, 1.8cqw, 16px); letter-spacing: 0.08em; text-transform: uppercase; color: var(--g6);
+}
+.badge-wall h3 b { color: var(--g7); font-variant-numeric: tabular-nums; }
+.badge-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.8cqw; }
+.badge { margin: 0; }
+.badge img { display: block; width: 100%; height: auto; image-rendering: pixelated; }
+.badge.new img { animation: badge-glow 1.1s ease-in-out infinite alternate; }
+@keyframes badge-glow { from { filter: drop-shadow(0 0 0 rgba(228, 246, 166, 0)); } to { filter: drop-shadow(0 0 6px rgba(228, 246, 166, 0.95)); } }
+@media (prefers-reduced-motion: reduce) { .badge.new img { animation: none; filter: drop-shadow(0 0 4px rgba(228, 246, 166, 0.8)); } }
+.primary.cont { background: var(--g7); }
+.follow { position: absolute; inset: 0; z-index: 2; background: rgba(5, 12, 6, 0.86); }
+.follow h2 {
+  position: absolute; left: 0; right: 0; top: 12%; margin: 0; padding-inline: 4cqw; text-align: center;
+  font-family: var(--font-display); font-weight: 700; font-size: clamp(18px, 5cqw, 40px); letter-spacing: 0.05em; color: var(--g7); text-wrap: balance;
+}
+.follow-btn { position: absolute; transform: translateX(-50%); white-space: nowrap; max-width: 31%; overflow: hidden; text-overflow: ellipsis; font-size: clamp(10px, 1.9cqw, 16px); }
+.follow-btn:active { transform: translateX(-50%) translateY(3px); }
+.lang { display: inline-flex; }
+.lang .ghost { padding-inline: 10px; }
+.lang .ghost + .ghost { border-left: 0; }
+.lang .ghost[aria-pressed="true"] { background: var(--g6); color: var(--g0); border-color: var(--g6); }
+
+/* ---- name field, leaderboard tabs ---- */
+.name-row { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.name-row label { font-size: clamp(11px, 1.7cqw, 14px); letter-spacing: 0.12em; text-transform: uppercase; color: var(--g5); }
+.name-row input {
+  width: min(16em, 60cqw); padding: 0.45em 0.7em; font: inherit; font-size: clamp(13px, 2cqw, 17px);
+  color: var(--g7); background: var(--g1); border: 2px solid var(--g5); border-radius: 0; text-align: center;
+}
+.name-row input:focus-visible { outline: 3px solid var(--g7); outline-offset: 2px; border-color: var(--g7); }
+.name-hint { margin: 0; font-size: clamp(11px, 1.7cqw, 14px); color: var(--g7); }
+.tabs { display: flex; gap: 4px; }
+.tabs button {
+  flex: 1 1 0; min-width: 0; padding: 0.45em 0.4em; font-family: var(--font-display); font-weight: 700;
+  font-size: clamp(10px, 1.55cqw, 14px); letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap;
+  color: var(--g5); background: transparent; border: 1px solid var(--g3);
+}
+.tabs button[aria-selected="true"] { color: var(--g0); background: var(--g6); border-color: var(--g6); }
+.tabs button b { font-variant-numeric: tabular-nums; }
+.board { width: 100%; border-collapse: collapse; font-size: clamp(10px, 1.55cqw, 14px); font-variant-numeric: tabular-nums; }
+.board th { text-align: left; font-weight: 500; font-size: 0.85em; letter-spacing: 0.1em; text-transform: uppercase; color: var(--g5); padding: 0.3em 0.35em; border-bottom: 1px solid var(--g3); }
+.board td { padding: 0.28em 0.35em; color: var(--g7); border-bottom: 1px solid rgba(48, 75, 39, 0.6); }
+.board th:last-child, .board td:last-child { text-align: right; }
+.board td:nth-child(2) { max-width: 0; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.board tr.me td { background: rgba(180, 220, 108, 0.18); color: var(--g7); font-weight: 500; }
+.board-note { margin: 0.6em 0 0; font-size: clamp(9px, 1.35cqw, 12px); line-height: 1.45; color: var(--g5); }
+
+/* ---- email entry, race link, warning ---- */
+.entry { display: flex; flex-direction: column; align-items: center; gap: clamp(4px, 0.9cqw, 9px); }
+.race-link { font-weight: 500; font-size: clamp(11px, 1.75cqw, 15px); color: var(--g7); text-decoration: underline; text-underline-offset: 3px; text-wrap: balance; }
+.race-link:hover { color: var(--g6); }
+.race-link:focus-visible { outline: 3px solid var(--g7); outline-offset: 3px; }
+.race-note { margin: 0; max-width: 32em; font-size: clamp(9px, 1.35cqw, 12px); line-height: 1.45; color: var(--g5); text-wrap: balance; }
+.name-row label { min-width: 6.5em; text-align: right; }
+.warn-pop { position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; padding: 3cqw; background: rgba(5, 12, 6, 0.75); }
+.warn-box {
+  max-width: min(30em, 86%); display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 18px 22px;
+  background: var(--g1); border: 2px solid var(--g6); box-shadow: 0 0 0 4px var(--g0), 0 0 30px rgba(180, 220, 108, 0.25); text-align: center;
+}
+.warn-box h3 { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: clamp(15px, 2.6cqw, 22px); letter-spacing: 0.05em; text-transform: uppercase; color: var(--g7); }
+.warn-box p { margin: 0; font-size: clamp(11px, 1.8cqw, 15px); line-height: 1.5; color: var(--g7); }
+
+/* ---- phones: compact landscape layout; turned sideways when the phone is upright ---- */
+:root { --appW: 100vw; --appH: 100vh; }
+html.touch body { padding-block: 6px; place-items: start center; }
+html.touch .shell { gap: 6px; }
+html.touch .hud { flex-wrap: nowrap; align-items: center; gap: 10px; }
+html.touch .brand { flex-direction: row; align-items: center; gap: 10px; }
+html.touch h1 { font-size: 16px; }
+html.touch .site-link { font-size: 10px; padding: 3px 7px; box-shadow: 0 2px 0 var(--g3); }
+html.touch .stats { gap: 12px; }
+html.touch .stats dt { font-size: 9px; }
+html.touch .stats dd { font-size: 15px; }
+html.touch .stage { width: min(100%, calc((var(--appH) - 84px) * 16 / 9)); margin-inline: auto; }
+html.touch .bar { gap: 4px 12px; }
+html.touch .ghost { padding: 5px 9px; font-size: 12px; }
+html.touch .keys { display: none; }   /* the start screen explains the touch controls */
+html.touch .overlay { padding: 2cqw; }
+html.touch .panel { gap: 4px; }
+html.touch .panel h2 { font-size: 20px; }
+html.touch #ovText { font-size: 10.5px; line-height: 1.35; }
+html.touch .entry { gap: 3px; }
+html.touch .name-row label { min-width: 0; font-size: 9px; }
+html.touch .name-row input { font-size: 12px; padding: 0.2em 0.5em; width: min(14em, 48cqw); }
+html.touch .race-link { font-size: 10.5px; }
+html.touch .race-note { font-size: 9px; line-height: 1.3; }
+html.touch .primary { font-size: 12px; padding: 0.55em 1.2em; }
+html.rot, html.rot body { height: 100%; overflow: hidden; }
+html.rot .shell {
+  position: fixed; top: 0; left: 0; width: var(--appW); height: var(--appH); max-width: none;
+  transform-origin: top left; transform: rotate(90deg) translateY(-100%);
+  padding: 6px 14px; box-sizing: border-box; background: var(--g0); overflow: hidden;
+}
+</style>
+</head>
+<body>
+<main class="shell">
+  <header class="hud">
+    <div class="brand">
+      <a id="siteLink" class="site-link" href="https://www.papionofficial.com" target="_blank" rel="noopener" data-t="PAPION WEBSITE HERE">PAPION WEBSITE HERE</a>
+      <h1>LOVE U 4LL</h1>
+    </div>
+    <dl class="stats">
+      <div><dt data-t="Score">Score</dt><dd id="score">0</dd></div>
+      <div><dt data-t="Hearts">Hearts</dt><dd id="coins" class="hi">0</dd></div>
+      <div><dt data-t="Best">Best</dt><dd id="best">0</dd></div>
+      <div><dt data-t="Badges">Badges</dt><dd id="badges">0/0</dd></div>
+    </dl>
+  </header>
+
+  <div class="stage">
+    <canvas id="game" width="960" height="540" role="img" aria-label="Side-scrolling game."></canvas>
+    <div class="overlay" id="overlay" role="dialog" aria-labelledby="ovTitle">
+      <div class="ov-wrap">
+        <div class="panel">
+          <h2 id="ovTitle"></h2>
+          <p id="ovText"></p>
+          <form id="nameForm" class="entry" hidden novalidate>
+            <div class="name-row">
+              <label for="nameIn" data-t="Your name">Your name</label>
+              <input id="nameIn" name="player" type="text" maxlength="16" autocomplete="nickname" spellcheck="false" enterkeyhint="go">
+            </div>
+            <a id="raceLink" class="race-link" href="https://www.papionofficial.com" target="_blank" rel="noopener" data-t="Participate in leaderboard race and win prizes! Rules here.">Participate in leaderboard race and win prizes! Rules here.</a>
+            <div class="name-row">
+              <label for="emailIn" data-t="Email">Email</label>
+              <input id="emailIn" name="email" type="email" maxlength="254" autocomplete="email" inputmode="email" spellcheck="false" enterkeyhint="go" placeholder="name@example.com" data-tp="name@example.com">
+            </div>
+            <p class="race-note" data-t="You can still play without putting email, but you can't participate in the leaderboard race.">You can still play without putting email, but you can't participate in the leaderboard race.</p>
+          </form>
+          <p id="nameHint" class="name-hint" role="alert" hidden></p>
+          <div class="ov-stats" id="ovStats" hidden>
+            <div><span data-t="Score">Score</span><b id="ovScore">0</b></div>
+            <div><span data-t="Distance">Distance</span><b id="ovDist">0 m</b></div>
+            <div><span data-t="Hearts">Hearts</span><b id="ovCoins">0</b></div>
+            <div><span data-t="Cleared">Cleared</span><b id="ovClear">0</b></div>
+          </div>
+          <p id="ovTip" class="ov-tip" hidden></p>
+          <div class="ov-actions">
+            <a id="ovLink" class="primary" href="https://www.youtube.com/@papionofficial" target="_blank" rel="noopener" hidden data-t="LOVE U 4LL release 23 Oct">LOVE U 4LL release 23 Oct</a>
+            <a id="ovCont" class="primary cont" href="https://www.instagram.com/naianuneno.papion/" target="_blank" rel="noopener" hidden data-t="CONTINUE">CONTINUE</a>
+            <button type="button" id="ovBtn" class="primary">GAME START</button>
+          </div>
+        </div>
+        <aside class="badge-wall" id="badgeWall" hidden>
+          <div class="tabs" role="tablist">
+            <button type="button" role="tab" id="tabBoard" aria-selected="true" aria-controls="boardPane" data-t="LEADERBOARD">LEADERBOARD</button>
+            <button type="button" role="tab" id="tabBadges" aria-selected="false" aria-controls="badgePane"><span data-t="Badges">Badges</span> <b id="wallCount">0/0</b></button>
+          </div>
+          <div id="boardPane" role="tabpanel">
+            <table class="board">
+              <thead><tr><th>#</th><th data-t="Name">Name</th><th data-t="Score">Score</th></tr></thead>
+              <tbody id="boardBody"></tbody>
+            </table>
+            <p class="board-note" id="boardNote"></p>
+          </div>
+          <div id="badgePane" role="tabpanel" hidden>
+            <div class="badge-grid" id="badgeGrid"></div>
+          </div>
+        </aside>
+      </div>
+    </div>
+    <div class="warn-pop" id="emailWarn" hidden role="alertdialog" aria-modal="true" aria-labelledby="emailWarnTitle" aria-describedby="emailWarnText">
+      <div class="warn-box">
+        <h3 id="emailWarnTitle" data-t="Check your email">Check your email</h3>
+        <p id="emailWarnText" data-t="That email address doesn't look right. Use the format name@example.com, or leave the box empty to play without joining the leaderboard race.">That email address doesn't look right.</p>
+        <button type="button" id="emailWarnOk" class="primary">OK</button>
+      </div>
+    </div>
+    <div class="follow" id="followPop" hidden role="dialog" aria-labelledby="followTitle">
+      <h2 id="followTitle" data-t="HAVE YOU FOLLOWED HER?">HAVE YOU FOLLOWED HER?</h2>
+      <div id="followBtns"></div>
+    </div>
+  </div>
+
+  <div class="bar">
+    <div class="btns">
+      <button type="button" id="poseBtn" class="ghost" disabled data-t="Pose">Pose</button>
+      <a id="pauseBtn" class="ghost" href="https://www.youtube.com/@papionofficial" target="_blank" rel="noopener" aria-disabled="true" tabindex="-1" data-t="Pause">Pause</a>
+      <button type="button" id="soundBtn" class="ghost" aria-pressed="true">Sound on</button>
+      <div class="lang" role="group" aria-label="Language / Bahasa">
+        <button type="button" class="ghost" data-lang="en" aria-pressed="true">EN</button><button type="button" class="ghost" data-lang="id" aria-pressed="false">ID</button>
+      </div>
+    </div>
+    <p class="keys" id="keysLine"></p>
+  </div>
+</main>
+
+<!-- Site settings. The server team edits these two files. -->
+<script src="links.js"></script>
+<script src="config.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var HERO_SRC = 'assets/sprites.png';
+  var WORLD_SRC = 'assets/world.jpg';
+  // Atlas frames are stored at 2x: [x, y, w, h, footX, footY]. Anims list frame indices in sheet order.
+  var ATLAS = {"frames": [[0, 0, 71, 203, 33.9, 202.8], [73, 0, 89, 203, 41.0, 202.8], [164, 0, 91, 202, 43.7, 202.8], [257, 0, 85, 203, 41.9, 202.8], [344, 0, 80, 204, 40.6, 202.8], [426, 0, 85, 204, 46.8, 202.8], [513, 0, 83, 204, 44.6, 202.8], [598, 0, 77, 204, 45.9, 202.8], [677, 0, 150, 183, 73.6, 182.0], [829, 0, 139, 179, 66.0, 177.8], [970, 0, 161, 182, 85.3, 181.2], [1133, 0, 148, 182, 71.9, 181.2], [1283, 0, 154, 180, 79.4, 182.8], [1439, 0, 111, 177, 52.3, 176.2], [1552, 0, 110, 163, 49.5, 161.6], [1664, 0, 117, 183, 69.2, 182.4], [1783, 0, 125, 197, 72.0, 196.5], [1910, 0, 130, 203, 75.9, 201.6], [0, 206, 126, 170, 71.4, 169.5], [128, 206, 117, 177, 57.3, 175.6], [247, 206, 108, 176, 65.2, 175.1], [357, 206, 123, 185, 73.1, 184.1], [482, 206, 109, 152, 71.4, 150.9], [593, 206, 114, 141, 70.3, 139.6], [709, 206, 111, 204, 57.3, 202.7], [822, 206, 118, 202, 59.6, 201.2], [942, 206, 124, 201, 62.2, 199.5], [1068, 206, 128, 198, 64.7, 197.0], [1198, 206, 129, 196, 65.5, 194.5], [1329, 206, 128, 196, 64.7, 194.5], [1459, 206, 124, 196, 61.3, 194.5], [1585, 206, 119, 197, 58.8, 196.2], [1706, 206, 115, 201, 56.3, 199.5], [1823, 206, 103, 202, 47.0, 201.0], [1928, 206, 105, 202, 50.8, 201.0], [0, 412, 99, 201, 49.7, 200.2], [101, 412, 136, 188, 86.8, 187.2], [239, 412, 112, 199, 56.1, 198.1], [353, 412, 175, 110, 87.6, 109.0], [530, 412, 111, 202, 67.2, 201.0], [643, 412, 88, 202, 44.0, 201.0], [733, 412, 147, 143, 73.5, 142.1]], "anims": {"walk": [0, 1, 2, 3, 4, 5, 6, 7], "run": [8, 9, 10, 11, 12], "jump": [13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24], "idle": [25, 26, 27, 28, 29, 30, 31, 32], "poses": [33, 34, 35, 36, 37, 38, 39, 40, 41]}};
+  var A = ATLAS.anims, F = ATLAS.frames;
+  // 8-frame run: every 2 of each 3 frames from the 12-frame run sheet, evenly spaced
+  var RUN = A.run;   // 8-frame run sheet
+  var STAND_H = 100;          // standing height in game units
+  var POSE_TIME = 1.25;       // seconds a pose is held
+
+  var W = 960, H = 540, STEP = 1 / 60;
+  var GRAV = 2200, JUMP = 840, JUMP2 = 760;
+  var PW = 30, PH = 94, PX = 190;
+  var C = {
+    g0: '#050c06', g1: '#0e1b0e', g2: '#1b2e17', g3: '#304b27',
+    g4: '#517a3b', g5: '#7fae4e', g6: '#b4dc6c', g7: '#e4f6a6'
+  };
+
+  var cv = document.getElementById('game');
+  var ctx = cv.getContext('2d');
+  var DPR = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = W * DPR;
+  cv.height = H * DPR;
+  var reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+  function $(id) { return document.getElementById(id); }
+  var elScore = $('score'), elCoins = $('coins'), elBest = $('best');
+  var ov = $('overlay'), ovTitle = $('ovTitle'), ovText = $('ovText'), ovStats = $('ovStats'), ovBtn = $('ovBtn');
+  var ovScore = $('ovScore'), ovDist = $('ovDist'), ovCoins = $('ovCoins'), ovLink = $('ovLink'), ovClear = $('ovClear'), ovTip = $('ovTip');
+  var btnPause = $('pauseBtn'), btnSound = $('soundBtn'), btnPose = $('poseBtn');
+  var elBadges = $('badges'), ovCont = $('ovCont'), badgeWall = $('badgeWall'), badgeGrid = $('badgeGrid'), wallCount = $('wallCount');
+  var followPop = $('followPop'), followBtns = $('followBtns'), keysLine = $('keysLine'), langBtns = document.querySelectorAll('.lang [data-lang]');
+  var emailIn = $('emailIn'), emailWarn = $('emailWarn'), emailWarnOk = $('emailWarnOk');
+  var nameForm = $('nameForm'), nameIn = $('nameIn'), nameHint = $('nameHint'), boardBody = $('boardBody'), boardNote = $('boardNote');
+  var tabBoard = $('tabBoard'), tabBadges = $('tabBadges'), boardPane = $('boardPane'), badgePane = $('badgePane');
+
+  /* ---------- language: English / Bahasa Indonesia ----------
+     Every on-screen string is written in English in the code and looked up here at display time.
+     {name} placeholders are filled in by S(text, { name: value }). */
+  /* ---------- every hyperlink in the game ----------
+     The web version loads links.js, which can replace any of these. */
+  var LINKS = {
+    papionWebsite: 'https://www.papionofficial.com',             // "PAPION WEBSITE HERE" button, top left
+    raceRules: 'https://www.papionofficial.com',                 // "Participate in leaderboard race..." line, start screen
+    releaseVideo: 'https://www.youtube.com/@papionofficial',     // "LOVE U 4LL release 23 Oct" button, end screen
+    pausePage: 'https://www.youtube.com/@papionofficial',        // Pause button and the P key
+    continueLinks: [                                             // CONTINUE opens one of these at random
+      'https://open.spotify.com/artist/5IjysI4fz38ByQUBLqBCoW?si=Ue57q7VMRwGRUK97rUAO5w&utm_source=copy-link&nd=1&dlsi=bd839b1761674d3a',
+      'https://www.tiktok.com/@naianuneno.papion',
+      'https://www.instagram.com/naianuneno.papion/'
+    ]
+  };
+  (function () {
+    var o = window.N4IA_LINKS || {}, ok = function (u) { return typeof u === 'string' && /^https?:\/\//i.test(u.trim()); };
+    ['papionWebsite', 'raceRules', 'releaseVideo', 'pausePage'].forEach(function (k) { if (ok(o[k])) LINKS[k] = o[k].trim(); });
+    if (Array.isArray(o.continueLinks)) {
+      var c = o.continueLinks.filter(ok).map(function (u) { return u.trim(); });
+      if (c.length) LINKS.continueLinks = c;
+    }
+  })();
+  function applyLinks() {
+    $('siteLink').href = LINKS.papionWebsite;
+    $('raceLink').href = LINKS.raceRules;
+    $('ovLink').href = LINKS.releaseVideo;
+    $('pauseBtn').href = LINKS.pausePage;
+  }
+
+  var LANG = 'en';
+  try {
+    var savedLang = localStorage.getItem('n4ia-lang');
+    if (savedLang === 'en' || savedLang === 'id') LANG = savedLang;
+    else if ((navigator.language || '').toLowerCase().indexOf('id') === 0) LANG = 'id';
+  } catch (e) {}
+
+  var KEYS_DESK = '[Space] [↑] or tap to jump. Hold for height. Press again in the air to double jump. [↓][↓] strikes a pose. [P] pauses, [M] mutes.';
+  var KEYS_TOUCH = 'Tap to jump. Tap again in the air to double jump. Swipe down to strike a pose.';
+  var ARIA = 'Side-scrolling game. A pixel-art girl runs along a ruined, overgrown highway overpass, jumping broken gaps and green fires to collect hearts.';
+  var START_DESK = 'Help N4IA gather all the hearts to spread love in this burning urban jungle. Hold jump to go higher, press again mid-air to double jump. Tap Down twice to strike a pose. You might need them!';
+  var START_TOUCH = 'Help N4IA gather all the hearts to spread love in this burning urban jungle. Hold jump to go higher, tap again mid-air to double jump. Swipe down to strike a pose. You might need them!';
+
+  var ID = {
+    // page, HUD, buttons
+    'PAPION WEBSITE HERE': 'WEBSITE PAPION DI SINI',
+    'Score': 'Skor', 'Hearts': 'Hati', 'Best': 'Terbaik', 'Badges': 'Lencana', 'Distance': 'Jarak', 'Cleared': 'Lolos',
+    'Pose': 'Pose', 'Pause': 'Jeda', 'Sound on': 'Suara nyala', 'Sound off': 'Suara mati', 'Language': 'Bahasa',
+    '[Space] [↑] or tap to jump. Hold for height. Press again in the air to double jump. [↓][↓] strikes a pose. [P] pauses, [M] mutes.':
+      '[Space] [↑] atau ketuk untuk lompat. Tahan untuk lebih tinggi. Tekan lagi di udara untuk lompat ganda. [↓][↓] untuk berpose. [P] jeda, [M] bisukan.',
+    'Tap to jump. Tap again in the air to double jump. Swipe down to strike a pose.':
+      'Ketuk untuk lompat. Ketuk lagi di udara untuk lompat ganda. Usap ke bawah untuk berpose.',
+    'Side-scrolling game. A pixel-art girl runs along a ruined, overgrown highway overpass, jumping broken gaps and green fires to collect hearts.':
+      'Game side-scrolling. Seorang gadis pixel-art berlari di jalan layang yang runtuh dan ditumbuhi tanaman, melompati celah dan api hijau untuk mengumpulkan hati.',
+    // start screen
+    'Help N4IA gather all the hearts to spread love in this burning urban jungle. Hold jump to go higher, press again mid-air to double jump. Tap Down twice to strike a pose. You might need them!':
+      'Bantu N4IA mengumpulkan semua hati untuk menyebarkan cinta di hutan kota yang terbakar ini. Tahan lompat untuk lebih tinggi, tekan lagi di udara untuk lompat ganda. Ketuk Bawah dua kali untuk berpose. Mungkin kamu butuh itu!',
+    'Help N4IA gather all the hearts to spread love in this burning urban jungle. Hold jump to go higher, tap again mid-air to double jump. Swipe down to strike a pose. You might need them!':
+      'Bantu N4IA mengumpulkan semua hati untuk menyebarkan cinta di hutan kota yang terbakar ini. Tahan lompat untuk lebih tinggi, ketuk lagi di udara untuk lompat ganda. Usap ke bawah untuk berpose. Mungkin kamu butuh itu!',
+    'GAME START': 'MULAI MAIN',
+    // end screen
+    'Hearts collected: {n}': 'Hati terkumpul: {n}',
+    "Sorry, out of love. Let's start again.": 'Maaf, cintanya habis. Ayo mulai lagi.',
+    'LOVE U 4LL release 23 Oct': 'LOVE U 4LL rilis 23 Okt',
+    'CONTINUE': 'LANJUTKAN',
+    'LOVE U AGAIN': 'LOVE U LAGI', 'LOVE U AGAIN AGAIN': 'LOVE U LAGI LAGI', 'STILL LOVE U?': 'MASIH LOVE U?',
+    "IT'S NOT YOU, IT'S THE GAPS": 'BUKAN SALAHMU, SALAH JURANGNYA', 'ONE MORE. FOR REAL.': 'SEKALI LAGI. BENERAN.',
+    'OK THIS IS THE ONE': 'OKE INI YANG TERAKHIR', 'LOVE U AGAIN (x{n})': 'LOVE U LAGI (x{n})',
+    'Tip: Try not dying.': 'Tips: Coba jangan mati.', 'Tip: The hearts are not your friends.': 'Tips: Hati-hati itu bukan temanmu.',
+    'Tip: Jump.': 'Tips: Lompat.', 'Tip: Have you tried not falling?': 'Tips: Sudah coba untuk tidak jatuh?',
+    'Tip: Every challenge can be cleared. Allegedly.': 'Tips: Semua tantangan bisa dilewati. Katanya.',
+    'Tip: The banner might be lying. Or not.': 'Tips: Spanduknya mungkin bohong. Atau tidak.',
+    'Tip: Pausing is a trap.': 'Tips: Tombol jeda itu jebakan.', 'Tip: Gravity is undefeated.': 'Tips: Gravitasi tak terkalahkan.',
+    'Tip: The gap was there the whole time.': 'Tips: Jurangnya sudah ada dari tadi.',
+    'Tip: That checkpoint was decorative.': 'Tips: Checkpoint tadi cuma hiasan.',
+    'Deaths this session: {n}.': 'Kematian sesi ini: {n}.',
+    "She's starting to worry about you.": 'Dia mulai khawatir sama kamu.',
+    'She brought snacks. This could take a while.': 'Dia bawa camilan. Ini bakal lama.',
+    "She's sitting down now. Take your time.": 'Dia sudah duduk sekarang. Santai saja.',
+    '???': '???',
+    // continue
+    'HAVE YOU FOLLOWED HER?': 'SUDAH FOLLOW DIA?',
+    'YES': 'SUDAH', 'SURE': 'TENTU', 'YOU BET': 'PASTI DONG', 'I LIVE FOR HER': 'AKU HIDUP UNTUKNYA', 'MY QUEEN': 'RATUKU',
+    'GO!': 'AYO!',
+    // banners
+    'IMPOSSIBLE CHALLENGE': 'TANTANGAN MUSTAHIL', 'CLEAR!': 'LOLOS!', 'OOPS.': 'UPS.', "LET'S DO THAT AGAIN.": 'AYO ULANGI LAGI.',
+    'AGAIN. THIS ONE COUNTS DOUBLE.': 'LAGI. YANG INI NILAINYA DOBEL.', 'SAY CHEESE!': 'BILANG CHEESE!', 'She saw a camera.': 'Dia lihat kamera.',
+    'CHECKPOINT ✓': 'CHECKPOINT ✓', 'Progress saved.': 'Progres tersimpan.',
+    'EASY MODE: ON ✓': 'MODE MUDAH: NYALA ✓', 'Relax. We made it easier.': 'Santai. Sudah kami buat lebih gampang.',
+    '<< REWIND': '<< MUNDUR',
+    // challenges: names, hints, decoys, reveals
+    'ELEVATOR': 'LIFT', 'They go up. They go down. They do not wait.': 'Naik. Turun. Nggak nungguin kamu.',
+    'TURBO RUSH': 'TURBO NGEBUT', 'Speed x1.4. Good luck.': 'Kecepatan x1,4. Semoga beruntung.',
+    'HEART TRAP': 'JEBAKAN HATI', 'Not every heart is on your side.': 'Tidak semua hati ada di pihakmu.',
+    'FAKE CLEAR': 'LOLOS PALSU', 'BIG GAPS': 'CELAH BESAR', 'Just a few jumps. Easy.': 'Cuma beberapa lompatan. Gampang.',
+    'CLEAR! (FOR REAL)': 'LOLOS! (BENERAN)', 'FAKE CLEAR. GOT YOU.': 'LOLOS PALSU. KENA KAMU.',
+    'FAKE GAME OVER': 'GAME OVER PALSU', 'FAKE GAME OVER. STILL HERE?': 'GAME OVER PALSU. MASIH DI SINI?',
+    "DON'T JUMP": 'JANGAN LOMPAT', 'Seriously. Do not press anything.': 'Serius. Jangan tekan apa pun.',
+    'MIRROR MODE': 'MODE CERMIN', 'Same controls. Different brain.': 'Kontrol sama. Otak beda.',
+    'CAMERA SHY': 'MALU KAMERA', 'EASY STRETCH': 'JALUR SANTAI', 'Nothing to see here.': 'Nggak ada apa-apa di sini.',
+    'CAMERA SHY. SAY CHEESE.': 'MALU KAMERA. BILANG CHEESE.',
+    'LAZY LEGS': 'KAKI MALAS', "She's tired. Short hops only.": 'Dia capek. Cuma loncat pendek.',
+    'RECORD SCRATCH': 'PIRINGAN TERGORES', 'SHORT GAP': 'CELAH PENDEK', 'An easy one.': 'Yang ini gampang.',
+    'RECORD SCRATCH. NICE TIMING.': 'PIRINGAN TERGORES. TIMING MANTAP.',
+    'THANK YOU FOR PLAYING': 'TERIMA KASIH SUDAH BERMAIN', 'NOT THE END. NOT EVEN CLOSE.': 'BELUM TAMAT. JAUH DARI TAMAT.',
+    'BLUE SCREEN': 'LAYAR BIRU', 'BLUE SCREEN. NO FILES WERE HARMED.': 'LAYAR BIRU. TIDAK ADA FILE YANG RUSAK.',
+    'POP-UP HELL': 'NERAKA POP-UP', 'QUIET STRETCH': 'JALUR TENANG', 'Nothing will pop up. Promise.': 'Nggak akan ada pop-up. Janji.',
+    'POP-UP HELL. CLOSE ALL WINDOWS.': 'NERAKA POP-UP. TUTUP SEMUA JENDELA.',
+    'LAG SPIKE': 'LAG PARAH', 'SMOOTH RUN': 'LARI MULUS', '60 frames per second. Guaranteed.': '60 frame per detik. Dijamin.',
+    'LAG SPIKE. IT WAS ALWAYS 60.': 'LAG PARAH. SEBENARNYA SELALU 60.',
+    'FAKE LOADING': 'LOADING PALSU', 'FAKE LOADING. IT NEVER LOADED.': 'LOADING PALSU. NGGAK PERNAH SELESAI.',
+    'INPUT LAG': 'INPUT TELAT', 'Your jumps arrive 0.15 s late. Press early.': 'Lompatanmu telat 0,15 detik. Tekan lebih awal.',
+    'SPRING FLOOR': 'LANTAI PEGAS', 'Tap. Do not hold.': 'Ketuk. Jangan ditahan.',
+    'STICKY SHOES': 'SEPATU LENGKET', 'Her shoe is stuck. Press twice to jump.': 'Sepatunya nyangkut. Tekan dua kali untuk lompat.',
+    'SHY PLATFORM': 'PIJAKAN PEMALU', 'ONE SMALL GAP': 'SATU CELAH KECIL', 'Just one. Maybe two.': 'Cuma satu. Mungkin dua.',
+    'SHY PLATFORM. IT LIKES YOU NOW.': 'PIJAKAN PEMALU. SEKARANG DIA SUKA KAMU.',
+    'FAKE CHECKPOINT': 'CHECKPOINT PALSU', 'FAKE CHECKPOINT. NOTHING WAS SAVED.': 'CHECKPOINT PALSU. TIDAK ADA YANG TERSIMPAN.',
+    'GREEDY HEARTS': 'HATI RAKUS', 'They do not want to be caught.': 'Mereka nggak mau ditangkap.',
+    'EASY MODE': 'MODE MUDAH',
+    'METEOR RAIN': 'HUJAN METEOR', 'Watch the sky. Then watch your feet.': 'Lihat langit. Lalu lihat kakimu.',
+    // zone gates and corner status
+    'TURBO': 'TURBO', 'END': 'AKHIR',
+    'TIRED: SHORT HOPS ONLY': 'CAPEK: CUMA LONCAT PENDEK', 'INPUT LAG 0.15 s': 'INPUT TELAT 0,15 dtk',
+    'STICKY: PRESS TWICE': 'LENGKET: TEKAN DUA KALI', 'DOUBLE JUMP OFF': 'LOMPAT GANDA MATI',
+    // fake game over
+    'SCORE {s}     DISTANCE {d} m     HEARTS {h}': 'SKOR {s}     JARAK {d} m     HATI {h}',
+    'LOVE U 4LL RELEASE 23 OCT': 'LOVE U 4LL RILIS 23 OKT', 'PRESS JUMP TO CONTINUE': 'TEKAN LOMPAT UNTUK LANJUT',
+    // record scratch
+    '( silence )': '( hening )',
+    // credits
+    'THANK YOU': 'TERIMA KASIH', 'FOR PLAYING': 'SUDAH BERMAIN', 'OUT 23 OCT': 'RILIS 23 OKT',
+    'STARRING   YOU': 'DIBINTANGI   KAMU', 'DIRECTED BY   YOUR THUMBS': 'SUTRADARA   JEMPOLMU',
+    'SPECIAL THANKS   GRAVITY': 'TERIMA KASIH KHUSUS   GRAVITASI', '...WAIT.': '...TUNGGU.', 'YOU ARE STILL RUNNING?': 'KAMU MASIH LARI?',
+    // pop-up windows
+    'Confirm Jump': 'Konfirmasi Lompat', 'Are you sure you want to jump?': 'Yakin mau lompat?', 'Yes': 'Ya', 'No': 'Tidak',
+    'Hearts.exe has stopped responding.': 'Hearts.exe tidak merespons.', 'Close': 'Tutup',
+    'Low Disk Space': 'Ruang Disk Rendah', 'You are running out of hearts on drive H:.': 'Hati di drive H: hampir habis.',
+    'Update Available': 'Pembaruan Tersedia', 'LOVE U 4LL v23.10 is ready to install.': 'LOVE U 4LL v23.10 siap dipasang.', 'Later': 'Nanti',
+    'The gap ahead is not responding.': 'Jurang di depan tidak merespons.', 'Wait': 'Tunggu', 'End Now': 'Akhiri',
+    'Error': 'Galat', 'Task failed successfully.': 'Tugas berhasil gagal.',
+    'LOVE U 4LL is out 23 Oct.': 'LOVE U 4LL rilis 23 Okt.', 'Remind me': 'Ingatkan',
+    'Warning': 'Peringatan', 'Gravity is still enabled.': 'Gravitasi masih aktif.',
+    // fake loading, lag, blue screen
+    'Loading...': 'Memuat...', 'Loading next area...': 'Memuat area berikutnya...',
+    'Estimated time remaining: {m} min': 'Perkiraan sisa waktu: {m} mnt',
+    'LOVE U 4LL (Not Responding)': 'LOVE U 4LL (Tidak Merespons)',
+    'A fatal exception 0E has occurred at 0023:4LL1023 in VXD': 'Terjadi kesalahan fatal 0E di 0023:4LL1023 pada VXD',
+    'GAP(01) + 00000023. The current run will be terminated.': 'GAP(01) + 00000023. Lari saat ini akan dihentikan.',
+    '*  Press any key to continue.': '*  Tekan tombol apa saja untuk lanjut.',
+    '*  Any key you press will be remembered.': '*  Tombol yang kamu tekan akan diingat.',
+    'Press any key to continue': 'Tekan tombol apa saja untuk lanjut',
+    // pause troll, death marker
+    'brb, watching PAPION...': 'bentar, lagi nonton PAPION...', "oh. you're back.": 'oh. kamu balik.',
+    'still here? fine.': 'masih di sini? ya sudah.', 'come back :(': 'balik dong :(',
+    'you died here': 'kamu mati di sini',
+    // name + leaderboard
+    'Your name': 'Nama kamu', 'Enter your name to start.': 'Isi namamu dulu untuk mulai.',
+    'LEADERBOARD': 'PAPAN SKOR', 'Name': 'Nama', 'you': 'kamu',
+    'Shared leaderboard. Your best score is saved here.': 'Papan skor bersama. Skor terbaikmu tersimpan di sini.',
+    'Shared leaderboard. You can view it, but your scores are only saved on this device.': 'Papan skor bersama. Kamu bisa melihatnya, tapi skormu hanya tersimpan di perangkat ini.',
+    'Saved on this device only.': 'Hanya tersimpan di perangkat ini.',
+    'No scores yet. Be the first.': 'Belum ada skor. Jadilah yang pertama.',
+    'Loading leaderboard...': 'Memuat papan skor...',
+    'Online leaderboard. Your best score is saved here.': 'Papan skor online. Skor terbaikmu tersimpan di sini.',
+    "Couldn't reach the leaderboard server. Your score is saved on this device only.": 'Server papan skor tidak bisa dihubungi. Skormu hanya tersimpan di perangkat ini.',
+    'Participate in leaderboard race and win prizes! Rules here.': 'Ikut balapan papan skor dan menangkan hadiah! Aturannya di sini.',
+    'Email': 'Email', 'name@example.com': 'nama@contoh.com',
+    "You can still play without putting email, but you can't participate in the leaderboard race.": 'Kamu tetap bisa main tanpa email, tapi tidak bisa ikut balapan papan skor.',
+    'Check your email': 'Cek email kamu',
+    "That email address doesn't look right. Use the format name@example.com, or leave the box empty to play without joining the leaderboard race.":
+      'Alamat email itu sepertinya salah. Gunakan format nama@contoh.com, atau kosongkan kotaknya untuk main tanpa ikut balapan papan skor.',
+    'No email, so this run is not in the leaderboard race. It is saved on this device only.': 'Tanpa email, jadi permainan ini tidak ikut balapan papan skor. Skornya hanya tersimpan di perangkat ini.'
+  };
+
+  function S(en, vars) {
+    var t = (LANG === 'id' && Object.prototype.hasOwnProperty.call(ID, en)) ? ID[en] : en;
+    if (vars) for (var k in vars) t = t.split('{' + k + '}').join(vars[k]);
+    return t;
+  }
+  // set a canvas font, shrinking it (down to 55%) until the text fits maxW
+  function fitFont(text, size, family, maxW) {
+    ctx.font = size + 'px ' + family;
+    var w = ctx.measureText(text).width;
+    if (w > maxW) ctx.font = Math.max(Math.floor(size * 0.55), Math.floor(size * maxW / w)) + 'px ' + family;
+  }
+  var FONT_W98 = "W98Title, 'Courier New', monospace", FONT_MONO = "'DM Mono', monospace";
+
+
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+
+  /* ---------- assets ---------- */
+  var hero = new Image(), world = new Image(), worldFlip = null, worldScale = 1, worldW = 0;
+  hero.src = HERO_SRC;
+  world.onload = function () {
+    worldScale = H / world.naturalHeight;
+    worldW = Math.round(world.naturalWidth * worldScale);
+    try {
+      var c = document.createElement('canvas');
+      c.width = world.naturalWidth; c.height = world.naturalHeight;
+      var x = c.getContext('2d');
+      x.translate(c.width, 0); x.scale(-1, 1);
+      x.drawImage(world, 0, 0);
+      worldFlip = c;
+    } catch (e) { worldFlip = null; }
+  };
+  world.src = WORLD_SRC;
+
+  /* ---------- storage ---------- */
+  var BEST_KEY = 'overpass-run-best';
+  var best = 0;
+  try { best = parseInt(localStorage.getItem(BEST_KEY), 10) || 0; } catch (e) { best = 0; }
+  elBest.textContent = best;
+  function saveBest() { try { localStorage.setItem(BEST_KEY, String(best)); } catch (e) {} }
+
+  /* ---------- sound ---------- */
+  var actx = null, soundOn = true;
+  function audio() {
+    if (actx) return actx;
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) actx = new AC();
+    } catch (e) { actx = null; }
+    return actx;
+  }
+  function tone(f0, f1, dur, type, vol) {
+    if (!soundOn) return;
+    var a = audio();
+    if (!a) return;
+    try {
+      if (a.state === 'suspended') a.resume();
+      var o = a.createOscillator(), g = a.createGain(), t = a.currentTime;
+      o.type = type;
+      o.frequency.setValueAtTime(f0, t);
+      o.frequency.exponentialRampToValueAtTime(Math.max(30, f1), t + dur);
+      g.gain.setValueAtTime(vol, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(a.destination);
+      o.start(t); o.stop(t + dur + 0.02);
+    } catch (e) {}
+  }
+  /* ---------- background music (music.mp3, published next to the page) ---------- */
+  // dark: the end-screen treatment. Slowed to 0.84x (about 3 semitones lower) with the highs filtered off.
+  // This darkens the mood; it does not change the song's key.
+  var MOOD = { normal: { rate: 1, cutoff: 18000, vol: 0.45 }, dark: { rate: 0.84, cutoff: 1100, vol: 0.38 } };
+  var music = { buf: null, src: null, gain: null, filter: null, loading: false, started: false,
+                pos: 0, t0: 0, rate: 1, mood: 'normal' };
+  function musicAdvance() {
+    if (music.src && actx) {
+      music.pos += (actx.currentTime - music.t0) * music.rate;
+      music.t0 = actx.currentTime;
+    }
+  }
+  function setMood(m) {
+    musicAdvance();
+    music.mood = m;
+    var p = MOOD[m];
+    music.rate = p.rate;
+    if (!actx) return;
+    var t = actx.currentTime;
+    try {
+      if (music.src) music.src.playbackRate.setTargetAtTime(p.rate, t, 0.35);
+      if (music.filter) music.filter.frequency.setTargetAtTime(p.cutoff, t, 0.35);
+      if (music.gain) music.gain.gain.setTargetAtTime(p.vol, t, 0.35);
+    } catch (e) {}
+  }
+  function loadMusic() {
+    var a = audio();
+    if (!a || music.loading) return;
+    music.loading = true;
+    fetch('assets/music.mp3')
+      .then(function (r) { if (!r.ok) throw new Error('music ' + r.status); return r.arrayBuffer(); })
+      .then(function (b) { return new Promise(function (res, rej) { a.decodeAudioData(b, res, rej); }); })
+      .then(function (buf) { music.buf = buf; syncMusic(); })
+      .catch(function () { music.loading = false; });
+  }
+  function syncMusic() {
+    var a = actx;
+    if (!a || !music.buf) return;
+    var want = music.started && soundOn && state !== 'paused' && !document.hidden && !music.cut && state !== 'away';
+    try {
+      var p = MOOD[music.mood];
+      if (want && !music.src) {
+        if (a.state === 'suspended') a.resume();
+        if (!music.gain) {
+          music.filter = a.createBiquadFilter();
+          music.filter.type = 'lowpass';
+          music.gain = a.createGain();
+          music.filter.connect(music.gain);
+          music.gain.connect(a.destination);
+        }
+        music.filter.frequency.value = p.cutoff;
+        music.gain.gain.value = p.vol;
+        var s = a.createBufferSource();
+        s.buffer = music.buf; s.loop = true; s.playbackRate.value = p.rate;
+        s.connect(music.filter);
+        s.start(0, music.pos % music.buf.duration);
+        music.src = s; music.t0 = a.currentTime; music.rate = p.rate;
+      } else if (!want && music.src) {
+        musicAdvance();
+        music.pos %= music.buf.duration;
+        music.src.stop(); music.src.disconnect(); music.src = null;
+      }
+    } catch (e) { music.src = null; }
+  }
+
+  function musicSwell() {
+    if (!music.gain || !actx) return;
+    try {
+      var t = actx.currentTime, g = music.gain.gain;
+      g.cancelScheduledValues(t);
+      g.setTargetAtTime(0.75, t, 0.08);
+      g.setTargetAtTime(MOOD[music.mood].vol, t + 1.2, 0.4);
+    } catch (e) {}
+  }
+  var sfx = {
+    ding: function () { tone(1200, 1200, 0.05, 'square', 0.03); setTimeout(function () { tone(800, 800, 0.08, 'square', 0.03); }, 60); },
+    bsod: function () { tone(330, 330, 0.25, 'square', 0.05); },
+    lag: function () { tone(90, 90, 0.18, 'sawtooth', 0.04); },
+    stuck: function () { tone(140, 70, 0.08, 'triangle', 0.06); },
+    boing: function () { tone(180, 720, 0.18, 'triangle', 0.06); },
+    rewind: function () { tone(1600, 200, 0.6, 'sawtooth', 0.04); },
+    shutter: function () { tone(2400, 1600, 0.04, 'square', 0.04); setTimeout(function () { tone(500, 220, 0.07, 'triangle', 0.06); }, 40); },
+    scratch: function () { tone(1400, 140, 0.2, 'sawtooth', 0.07); setTimeout(function () { tone(900, 90, 0.16, 'sawtooth', 0.06); }, 110); },
+    drop: function () { tone(120, 45, 0.4, 'square', 0.08); },
+    warn: function () { tone(880, 880, 0.09, 'square', 0.035); setTimeout(function () { tone(660, 660, 0.12, 'square', 0.035); }, 110); },
+    clear: function () {
+      tone(523, 523, 0.08, 'square', 0.035);
+      setTimeout(function () { tone(659, 659, 0.08, 'square', 0.035); }, 80);
+      setTimeout(function () { tone(784, 784, 0.08, 'square', 0.035); }, 160);
+      setTimeout(function () { tone(1047, 1047, 0.2, 'square', 0.035); }, 240);
+    },
+    crack: function () { tone(180, 90, 0.12, 'sawtooth', 0.04); },
+    pose: function () {
+      tone(660, 660, 0.08, 'square', 0.03);
+      setTimeout(function () { tone(880, 880, 0.08, 'square', 0.03); }, 80);
+      setTimeout(function () { tone(1320, 1320, 0.16, 'square', 0.03); }, 160);
+    },
+    jump: function () { tone(300, 600, 0.12, 'square', 0.035); },
+    jump2: function () { tone(450, 880, 0.12, 'square', 0.035); },
+    coin: function () { tone(990, 990, 0.06, 'square', 0.03); setTimeout(function () { tone(1480, 1480, 0.1, 'square', 0.03); }, 55); },
+    land: function () { tone(130, 60, 0.08, 'triangle', 0.06); },
+    hit: function () { tone(200, 40, 0.45, 'sawtooth', 0.07); }
+  };
+
+  /* ---------- ambient embers (background) ---------- */
+  var embers = [];
+  for (var ei = 0; ei < 26; ei++) {
+    embers.push({ x: Math.random() * W, y: Math.random() * H, v: 12 + Math.random() * 30, s: Math.random() < 0.3 ? 3 : 2, ph: Math.random() * 6.28 });
+  }
+
+  var fogGrad = ctx.createLinearGradient(0, 250, 0, H);
+  fogGrad.addColorStop(0, 'rgba(5,12,6,0)');
+  fogGrad.addColorStop(0.45, 'rgba(5,12,6,0.55)');
+  fogGrad.addColorStop(1, 'rgba(5,12,6,0.92)');
+  var underGrad = ctx.createLinearGradient(0, 330, 0, H);
+  underGrad.addColorStop(0, C.g2);
+  underGrad.addColorStop(1, C.g0);
+
+  function drawBackground() {
+    ctx.fillStyle = C.g1;
+    ctx.fillRect(-30, -30, W + 60, H + 60);
+    if (world.complete && world.naturalWidth && worldW) {
+      var off = G.scroll * 0.22;
+      var k = Math.floor(off / worldW);
+      var x = -(off - k * worldW);
+      for (var n = 0; n < 3 && x < W; n++, k++, x += worldW) {
+        var src = (k % 2 !== 0 && worldFlip) ? worldFlip : world;
+        ctx.drawImage(src, Math.floor(x), 0, worldW + 1, H);
+      }
+    }
+    // dim the far scene so the playable overpass reads in front of it
+    ctx.fillStyle = 'rgba(5,12,6,0.22)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = fogGrad;
+    ctx.fillRect(0, 250, W, H - 250);
+    // drifting embers
+    for (var i = 0; i < embers.length; i++) {
+      var e = embers[i];
+      var ex = (e.x - G.scroll * 0.35 % W + W * 2) % W + (reduce ? 0 : Math.sin(G.t * 1.3 + e.ph) * 6);
+      var ey = reduce ? e.y : (e.y - G.t * e.v) % H;
+      if (ey < 0) ey += H;
+      ctx.globalAlpha = 0.35 + 0.35 * Math.sin(G.t * 3 + e.ph);
+      ctx.fillStyle = e.s === 3 ? C.g7 : C.g6;
+      ctx.fillRect(Math.round(ex), Math.round(ey), e.s, e.s);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /* ---------- game state ---------- */
+  var state = 'ready';
+  var G, P, shown = { score: -1, coins: -1 };
+
+  function reset() {
+    G = {
+      t: 0, scroll: 0, dist: 0, speed: 0, base: 300, mul: 0, turbo: 1, coins: 0, bonus: 0, cleared: 0,
+      plats: [], spikes: [], coinList: [], parts: [], meteors: [], zones: [], chals: [], triggers: [], ceilings: [],
+      nextX: 0, lastY: 430, sinceChal: 99, lastChal: [], banner: null,
+      flags: [], popups: [], markers: [], popupLeft: 0, popupT: 0, loading: null, bsod: null, lag: 0, rewind: null,
+      timeSkipUsed: false, forceNext: null, sawCheckpoint: false, away: null,
+      chalN: 0, contUsed: 0, outOfLove: false, lastSafe: null, lastSafeY: 430, cd: 0, cdLast: 0,
+      marker: lastDeathWX !== null ? { wx: lastDeathWX, placed: false } : null,
+      mirror: 0, flip: 0, blindOn: false, blind: 0, flash: 0, fakeOver: null, credits: null, scratchTarget: null,
+      shake: 0, diedAt: 0, finalScore: 0, emberT: 0, newBest: false
+    };
+    P = { x: PX, y: 0, vy: 0, onGround: true, air: 1, coyote: 0.1, buffer: 0, holding: false, runT: 0, dustT: 0, dead: false,
+          stepD: 0, runPh: 0, airT: 0, landT: 0, pose: null, lastPose: -1, ground: null,
+          lagQ: [], releaseAt: 0, unstuck: false, yHist: [] };
+    addPlatform(-60, 820, 430, true);
+    P.y = 430 - PH;
+    P.ground = G.plats[0];
+    G.lastSafe = G.plats[0];
+    while (G.nextX < W + 300) spawnNext();
+    shown.score = -1; shown.coins = -1;
+    hud();
+  }
+
+  function rnd(a, b) { return a + Math.random() * (b - a); }
+
+  function makePlat(x, w, y) {
+    var cracks = [], rebar = [];
+    for (var cx = 40 + Math.random() * 60; cx < w - 40; cx += 90 + Math.random() * 120) {
+      cracks.push([Math.round(cx), Math.random() < 0.5 ? 1 : -1]);
+    }
+    for (var r = 0; r < 3; r++) rebar.push([Math.round(6 + Math.random() * 24), Math.round(4 + Math.random() * 12)]);
+    var p = { x: x, w: w, y: y, cracks: cracks, rebar: rebar, pOff: Math.round(30 + Math.random() * 60), kind: 'normal', solid: true };
+    G.plats.push(p);
+    G.nextX = x + w;
+    G.lastY = y;
+    return p;
+  }
+
+  function addPlatform(x, w, y, safe) {
+    makePlat(x, w, y);
+    if (safe) return;
+
+    var fireCenter = null, units = 1 + Math.floor(Math.random() * 3), sw = units * 32;
+    if (w >= 300 + sw && Math.random() < Math.min(0.75, 0.35 + G.dist / 20000)) {
+      var sx = x + 150 + Math.random() * (w - 300 - sw);
+      fire(sx, y, units);
+      fireCenter = sx + sw / 2;
+    }
+
+    var i, n;
+    if (fireCenter !== null) {
+      n = 5;
+      for (i = 0; i < n; i++) heart(fireCenter - 76 + i * 38, y - 60 - 80 * Math.sin(Math.PI * i / (n - 1)));
+    } else if (Math.random() < 0.7) {
+      n = 3 + Math.floor(Math.random() * 4);
+      var startX = x + 40 + Math.random() * Math.max(0, w - 80 - n * 34);
+      var flat = Math.random() < 0.5;
+      for (i = 0; i < n; i++) heart(startX + i * 34, y - (flat ? 46 : 50 + 50 * Math.sin(Math.PI * i / (n - 1))));
+    }
+  }
+
+  function spawnNext() {
+    // challenges come back to back: the run opens with one, then 0-1 ordinary platforms between them
+    if (G.sinceChal >= Math.floor(Math.random() * 2)) {
+      spawnChallenge();
+      G.sinceChal = 0;
+      return;
+    }
+    G.sinceChal++;
+    var maxGap = 170 + Math.max(0, G.base - 300) * 0.35;
+    var gap = Math.floor(90 + Math.random() * (maxGap - 90));
+    var w = Math.floor(260 + Math.random() * 320);
+    var y = G.lastY + Math.floor((Math.random() - 0.5) * 180);
+    y = clamp(y, 340, 470);
+    if (G.lastY - y > 90) y = G.lastY - 90;
+    addPlatform(G.nextX + gap, w, y, false);
+  }
+
+  /* ---------- impossible challenges ----------
+     Every size below comes from the jump physics, measured at the speed s when the challenge is spawned
+     (speed only rises after that, which makes jumps longer, never shorter):
+       single full jump reaches about 0.75*s on the flat, 0.667*s when landing 60px higher
+       double jump reaches about 1.32*s landing 60px higher
+       a single jump stays above fire height for 0.667 s
+     Gaps are kept to about 80% of the reach they need, plus the 22px the hitbox gives back at the edges. */
+
+  function nextY(prev, lo, hi) {   // lo/hi: change in y; negative is higher
+    var y = clamp(prev + rnd(lo, hi), 340, 470);
+    if (prev - y > 60) y = prev - 60;
+    return Math.round(y);
+  }
+  function heart(x, y) { G.coinList.push({ x: x, y: y, ph: Math.random() * 6.28, got: false }); }
+  function fire(x, y, units) {
+    var ph = [];
+    for (var u = 0; u < units; u++) ph.push(Math.random() * 6.28);
+    G.spikes.push({ x: x, y: y, w: units * 32, ph: ph });
+  }
+  // feet height after t seconds of a held jump (negative is up); dj = when the second jump fires, or -1
+  function arcY(t, dj) {
+    var y = 0, vy = -JUMP, tt = 0, used = false;
+    while (tt < t) {
+      if (dj >= 0 && !used && tt >= dj) { vy = -JUMP2; used = true; }
+      vy = Math.min(1400, vy + GRAV / 60); y += vy / 60; tt += 1 / 60;
+    }
+    return y;
+  }
+
+  // Challenge fields:
+  //   decoy: [name, hint] shown instead of the real name (the troll), silent: no warning at all,
+  //   reveal: what the CLEAR banner says it really was, clearTitle: replaces "CLEAR!".
+  var CHALLENGES = [
+    { name: 'ELEVATOR', hint: 'They go up. They go down. They do not wait.', build: function (s) {
+        var base = clamp(nextY(G.lastY, -20, 20), 380, 420);
+        for (var i = 0; i < 4; i++) {
+          var p = makePlat(G.nextX + rnd(100, 0.45 * s + 22), 160, base);
+          p.kind = 'mover'; p.baseY = base; p.amp = rnd(40, 55); p.freq = 1 / rnd(1.8, 2.4); p.mph = Math.random() * 6.28;
+          heart(p.x + 80, base - p.amp - 50);
+        }
+      } },
+    { name: 'TURBO RUSH', hint: 'Speed x1.4. Good luck.', build: function (s) {
+        var x0 = G.nextX, f = 1.4 * s;
+        for (var i = 0; i < 5; i++) {
+          var p = makePlat(G.nextX + rnd(100, 0.5 * f + 22), Math.round(rnd(290, 380)), nextY(G.lastY, -50, 50));
+          if (i % 2 === 0) fire(p.x + p.w / 2 - 32, p.y, 2);
+          heart(p.x + 50, p.y - 50);
+        }
+        G.zones.push({ x0: x0 - 200, x1: G.nextX, type: 'turbo', label: 'TURBO' });
+      } },
+    { name: 'HEART TRAP', hint: 'Not every heart is on your side.', build: function (s) {
+        var a = makePlat(G.nextX + rnd(90, 140), 360, nextY(G.lastY, -30, 30));
+        var gap = Math.round(0.95 * s + 22), edge = a.x + a.w - 12, t;
+        for (t = 0.2; t <= 1.05; t += 0.13) heart(edge + s * t, a.y - 47 + arcY(t, -1));   // bait: falls short
+        var b = makePlat(a.x + a.w + gap, 420, nextY(a.y, 0, 30));
+        for (t = 0.5; t <= 1.3; t += 0.14) {                                               // the real double-jump route
+          var hx = edge + s * t;
+          if (hx > b.x + 40) break;
+          heart(hx, a.y - 47 + arcY(t, 0.38));
+        }
+      } },
+
+    // A fake "CLEAR!" on what looks like the landing pad. The real finish is two jumps later.
+    { name: 'FAKE CLEAR', decoy: ['BIG GAPS', 'Just a few jumps. Easy.'], clearTitle: 'CLEAR! (FOR REAL)', reveal: 'FAKE CLEAR. GOT YOU.',
+      build: function (s) {
+        for (var i = 0; i < 3; i++) {
+          var p = makePlat(G.nextX + rnd(110, 0.5 * s + 22), Math.round(rnd(220, 300)), nextY(G.lastY, -40, 40));
+          heart(p.x + p.w / 2, p.y - 50);
+        }
+        var L = makePlat(G.nextX + rnd(100, 0.45 * s + 22), 520, nextY(G.lastY, -20, 20));
+        trigger(L.x + 140, function () { banner('CLEAR!', '+100   ' + S('BIG GAPS'), 'clear'); sfx.clear(); musicSwell(); });
+        var a = makePlat(G.nextX + rnd(0.4 * s, 0.5 * s) + 22, 200, nextY(G.lastY, -30, 30));
+        heart(a.x + 100, a.y - 50);
+        makePlat(G.nextX + rnd(0.4 * s, 0.5 * s) + 22, 260, nextY(G.lastY, -30, 30));
+      } },
+
+    // The end screen slides in mid-run, half see-through. She keeps running. Jump dismisses it.
+    { name: 'FAKE GAME OVER', silent: true, reveal: 'FAKE GAME OVER. STILL HERE?', build: function (s) {
+        var first = null;
+        for (var i = 0; i < 5; i++) {
+          var p = makePlat(G.nextX + rnd(100, 0.45 * s + 22), Math.round(rnd(240, 320)), nextY(G.lastY, -30, 30));
+          if (!first) first = p;
+          heart(p.x + p.w / 2, p.y - 50);
+        }
+        trigger(first.x + 60, function () {
+          G.fakeOver = { t: 0 }; sfx.hit(); if (!reduce) G.shake = 0.3; setMood('dark');
+        }, true, first.x + first.w - 30);
+      } },
+
+    // Pits everywhere, a ceiling of fire just above her head. The pits have invisible floors.
+    { name: "DON'T JUMP", hint: 'Seriously. Do not press anything.', build: function (s) {
+        var y = nextY(G.lastY, -20, 20);
+        var first = makePlat(G.nextX + rnd(90, 0.45 * s + 22), Math.round(0.9 * s + 200), y);
+        var last = null;
+        for (var i = 0; i < 4; i++) {
+          var pit = makePlat(G.nextX, Math.round(rnd(110, 170)), y);
+          pit.kind = 'invisible';
+          heart(pit.x + pit.w / 2, y - 46);
+          last = makePlat(G.nextX, i < 3 ? Math.round(rnd(140, 240)) : 420, y);
+        }
+        var cx0 = first.x + 0.9 * s, cx1 = last.x + 120;
+        G.ceilings.push({ x: cx0, w: cx1 - cx0, y: y - PH - 16 });
+      } },
+
+    // The whole world flips. Same controls.
+    { name: 'MIRROR MODE', hint: 'Same controls. Different brain.', build: function (s) {
+        var x0 = G.nextX;
+        trigger(x0 - 260, function () { G.mirror = 1; sfx.warn(); });
+        for (var i = 0; i < 5; i++) {
+          var p = makePlat(G.nextX + rnd(100, 0.5 * s + 22), Math.round(rnd(260, 360)), nextY(G.lastY, -40, 40));
+          if (i % 2 === 1 && p.w >= 300) fire(p.x + p.w / 2 - 16, p.y, 1);
+          heart(p.x + 60, p.y - 50);
+        }
+        trigger(G.nextX + 40, function () { G.mirror = 0; });
+      } },
+
+    // She stops for a camera. The next gap is sized for the walking speed she restarts at.
+    { name: 'CAMERA SHY', decoy: ['EASY STRETCH', 'Nothing to see here.'], reveal: 'CAMERA SHY. SAY CHEESE.', build: function (s) {
+        var brake = 0.125 * s, dMin = 140, dNom = 230;
+        var y = nextY(G.lastY, -20, 20);
+        var a = makePlat(G.nextX + rnd(90, 0.45 * s + 22), Math.round(120 + brake + dNom), y);
+        var edge = a.x + a.w;
+        // fires once she is on the ground; skipped if she is still airborne this close to the edge
+        trigger(a.x + 120, forcePose, true, edge - brake - dMin);
+        var v = Math.sqrt(2 * dMin * 0.8 * s);          // her speed at the edge in the latest case
+        var b = makePlat(edge + Math.round(0.45 * v + 22), 300, nextY(y, 0, 30));
+        b.vCheck = v;
+        heart(b.x + 150, b.y - 50);
+        makePlat(G.nextX + rnd(100, 0.45 * s + 22), 300, nextY(G.lastY, -30, 30));
+      } },
+
+    // Jumps are cut to short hops. Gaps that take one normal jump now take a hop and a second hop.
+    { name: 'LAZY LEGS', hint: "She's tired. Short hops only.", build: function (s) {
+        var x0 = G.nextX;
+        for (var i = 0; i < 5; i++) {
+          var p = makePlat(G.nextX + rnd(0.36 * s, 0.5 * s) + 22, Math.round(rnd(220, 300)), nextY(G.lastY, -30, 30));
+          heart(p.x + 50, p.y - 40);
+        }
+        G.zones.push({ x0: x0 - 120, x1: G.nextX + 10, type: 'lazy', label: 'LAZY LEGS' });
+      } },
+
+    // The music scratches out and a curtain hides the far side. Music drops back in when she lands.
+    { name: 'RECORD SCRATCH', decoy: ['SHORT GAP', 'An easy one.'], reveal: 'RECORD SCRATCH. NICE TIMING.', build: function (s) {
+        var y = nextY(G.lastY, -20, 20);
+        var a = makePlat(G.nextX + rnd(90, 0.45 * s + 22), Math.round(0.9 * s + 300), y);
+        var b = makePlat(a.x + a.w + Math.round(0.45 * s + 22), 420, y);
+        trigger(a.x + a.w - 0.9 * s - 40, function () { scratchStart(b); }, true, a.x + a.w - 40);
+        var edge = a.x + a.w - 12;
+        for (var t = 0.15; t <= 0.75; t += 0.12) heart(edge + s * t, y - 47 + arcY(t, -1));
+        makePlat(G.nextX + rnd(100, 0.45 * s + 22), 280, nextY(G.lastY, -30, 30));
+      } },
+
+    // Fake credits roll up over the course, covering the next jumps.
+    { name: 'THANK YOU FOR PLAYING', silent: true, reveal: 'NOT THE END. NOT EVEN CLOSE.', build: function (s) {
+        var first = null;
+        for (var i = 0; i < 6; i++) {
+          var p = makePlat(G.nextX + rnd(100, 0.5 * s + 22), Math.round(rnd(240, 340)), nextY(G.lastY, -40, 40));
+          if (!first) first = p;
+          if (i % 2 === 1 && p.w >= 300) fire(p.x + p.w / 2 - 16, p.y, 1);
+          heart(p.x + 50, p.y - 50);
+        }
+        trigger(first.x + 40, function () { G.credits = { t: 0 }; musicSwell(); });
+      } },
+
+    /* ---------- rage pack ---------- */
+
+    // A fake crash freezes everything just before an edge. Any key resumes, and that key press is a jump.
+    { name: 'BLUE SCREEN', silent: true, reveal: 'BLUE SCREEN. NO FILES WERE HARMED.', build: function (s) {
+        var y = nextY(G.lastY, -20, 20);
+        var a = makePlat(G.nextX + rnd(90, 0.45 * s + 22), Math.round(0.9 * s + 240), y);
+        var edge = a.x + a.w, d = 0.15 * s;
+        trigger(edge - d - PW, function () { G.bsod = { t: 0 }; sfx.bsod(); }, true, edge - PW - 10);
+        var b = makePlat(edge + Math.round(0.3 * s + 22), 320, nextY(y, -10, 30));
+        b.bsodD = d;
+        heart(b.x + 60, b.y - 50);
+      } },
+
+    // Windows-style dialogs pop up over the course and close on their own.
+    { name: 'POP-UP HELL', decoy: ['QUIET STRETCH', 'Nothing will pop up. Promise.'], reveal: 'POP-UP HELL. CLOSE ALL WINDOWS.', build: function (s) {
+        var first = null;
+        for (var i = 0; i < 5; i++) {
+          var p = makePlat(G.nextX + rnd(100, 0.45 * s + 22), Math.round(rnd(240, 320)), nextY(G.lastY, -30, 30));
+          if (!first) first = p;
+          heart(p.x + p.w / 2, p.y - 50);
+        }
+        trigger(first.x + 30, function () { G.popupLeft = 8; G.popupT = 0; });
+      } },
+
+    // Half-second freezes right before jumps. The world really is frozen, so it is fair.
+    { name: 'LAG SPIKE', decoy: ['SMOOTH RUN', '60 frames per second. Guaranteed.'], reveal: 'LAG SPIKE. IT WAS ALWAYS 60.', build: function (s) {
+        for (var i = 0; i < 4; i++) {
+          var p = makePlat(G.nextX + rnd(100, 0.45 * s + 22), Math.round(rnd(280, 360)), nextY(G.lastY, -30, 30));
+          heart(p.x + 60, p.y - 50);
+          if (i < 3) trigger(p.x + p.w - 0.5 * s, function () { G.lag = 0.5; sfx.lag(); }, true, p.x + p.w - 40);
+        }
+      } },
+
+    // A loading dialog stuck at 99% sits in the middle of the screen while you keep playing.
+    { name: 'FAKE LOADING', silent: true, reveal: 'FAKE LOADING. IT NEVER LOADED.', build: function (s) {
+        var first = null;
+        for (var i = 0; i < 5; i++) {
+          var p = makePlat(G.nextX + rnd(100, 0.45 * s + 22), Math.round(rnd(250, 340)), nextY(G.lastY, -30, 30));
+          if (!first) first = p;
+          if (i % 2 === 1 && p.w >= 300) fire(p.x + p.w / 2 - 16, p.y, 1);
+          heart(p.x + 50, p.y - 50);
+        }
+        trigger(first.x + 30, function () { G.loading = { t: 0 }; });
+      } },
+
+    // Jumps (and releases) arrive 0.15 s late. A ghost trails behind to show it.
+    { name: 'INPUT LAG', hint: 'Your jumps arrive 0.15 s late. Press early.', build: function (s) {
+        var x0 = G.nextX;
+        for (var i = 0; i < 5; i++) {
+          var p = makePlat(G.nextX + rnd(100, 0.45 * s + 22), Math.round(rnd(240, 320)), nextY(G.lastY, -30, 30));
+          heart(p.x + 60, p.y - 50);
+        }
+        G.zones.push({ x0: x0 - 150, x1: G.nextX + 10, type: 'lag', label: 'INPUT LAG' });
+      } },
+
+    // Spring decks launch 1.45x higher, under a fire ceiling. A full hold (or a double jump) hits the fire.
+    { name: 'SPRING FLOOR', hint: 'Tap. Do not hold.', build: function (s) {
+        var y = nextY(G.lastY, -20, 20), first = null, last = null;
+        for (var i = 0; i < 4; i++) {
+          var p = makePlat(G.nextX + rnd(0.3 * s, 0.4 * s) + 22, Math.round(rnd(220, 280)), y);
+          p.kind = 'spring';
+          if (!first) first = p;
+          last = p;
+          heart(p.x + p.w / 2, y - 60);
+        }
+        G.ceilings.push({ x: first.x - 40, w: (last.x + last.w - 70) - (first.x - 40), y: y - 340 });
+      } },
+
+    // The first press on the ground does nothing. The second one jumps.
+    { name: 'STICKY SHOES', hint: 'Her shoe is stuck. Press twice to jump.', build: function (s) {
+        var x0 = G.nextX;
+        for (var i = 0; i < 5; i++) {
+          var p = makePlat(G.nextX + rnd(100, 0.45 * s + 22), Math.round(rnd(240, 320)), nextY(G.lastY, -30, 30));
+          heart(p.x + 60, p.y - 50);
+        }
+        G.zones.push({ x0: x0 - 150, x1: G.nextX + 10, type: 'sticky', label: 'STICKY SHOES' });
+      } },
+
+    // Two platforms that back away if you run up to them, and come to meet you if you are already in the air.
+    { name: 'SHY PLATFORM', decoy: ['ONE SMALL GAP', 'Just one. Maybe two.'], reveal: 'SHY PLATFORM. IT LIKES YOU NOW.', build: function (s) {
+        var y = nextY(G.lastY, -20, 20);
+        makePlat(G.nextX + rnd(90, 0.45 * s + 22), 360, y);
+        for (var i = 0; i < 2; i++) {
+          var p = makePlat(G.nextX + Math.round(0.45 * s + 22), 240, y);
+          p.kind = 'shy'; p.baseX = p.x; p.off = 0; p.shy = 'idle'; p.shyS = s;
+          heart(p.x + 120, p.y - 50);
+        }
+        makePlat(G.nextX + Math.round(rnd(0.3 * s, 0.4 * s) + 22 + 160), 300, y);
+      } },
+
+    // A checkpoint flag with a jingle. There are no checkpoints in this game.
+    { name: 'FAKE CHECKPOINT', silent: true, reveal: 'FAKE CHECKPOINT. NOTHING WAS SAVED.', build: function (s) {
+        var flag = null;
+        for (var i = 0; i < 4; i++) {
+          var p = makePlat(G.nextX + rnd(100, 0.45 * s + 22), Math.round(rnd(260, 340)), nextY(G.lastY, -30, 30));
+          heart(p.x + 60, p.y - 50);
+          if (i === 1) { flag = { x: p.x + p.w / 2, y: p.y, raised: false }; G.flags.push(flag); }
+        }
+        trigger(flag.x, function () {
+          flag.raised = true; G.sawCheckpoint = true;
+          banner('CHECKPOINT ✓', 'Progress saved.', 'clear'); sfx.clear();
+        });
+      } },
+
+    // Heart trails that drift away as you reach for them, out over the edge.
+    { name: 'GREEDY HEARTS', hint: 'They do not want to be caught.', build: function (s) {
+        for (var i = 0; i < 5; i++) {
+          var p = makePlat(G.nextX + rnd(100, 0.45 * s + 22), Math.round(rnd(260, 340)), nextY(G.lastY, -30, 30));
+          for (var k = 0; k < 4; k++) G.coinList.push({ x: p.x + p.w - 200 + k * 50, y: p.y - 46, ph: Math.random() * 6.28, got: false, flee: true, drift: 0 });
+        }
+      } },
+
+    // "EASY MODE: ON" ... and the next challenge is Turbo Rush.
+    { name: 'EASY MODE', silent: true, quiet: true, build: function (s) {
+        var first = makePlat(G.nextX + rnd(80, 110), 420, nextY(G.lastY, -10, 10));
+        makePlat(G.nextX + rnd(80, 110), 420, nextY(G.lastY, -10, 10));
+        trigger(first.x + 60, function () { banner('EASY MODE: ON ✓', 'Relax. We made it easier.', 'clear'); sfx.clear(); });
+        G.forceNext = 'TURBO RUSH';
+      } }
+,
+
+    // METEOR RAIN: always the 4th challenge of a run (never picked at random).
+    { name: 'METEOR RAIN', hint: 'Watch the sky. Then watch your feet.', fixed: 4, build: function (s) {
+        var n = 4, sp = 0.75 * s + rnd(90, 140);
+        var p = makePlat(G.nextX + rnd(90, 140), Math.round(340 + n * sp), nextY(G.lastY, -30, 30));
+        for (var i = 0; i < n; i++) G.meteors.push({ x: p.x + 260 + i * sp, deck: p.y, state: 'idle', t: 0, y: -40 });
+      } }
+  ];
+
+  // Challenge builds use a seeded random so TIME SKIP can rebuild the exact same layout.
+  function mulberry(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      var t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function seededBuild(c, s, seed) {
+    var orig = Math.random;
+    Math.random = mulberry(seed);
+    try { c.build(s); } finally { Math.random = orig; }
+  }
+  function spawnChallenge() {
+    var c = null;
+    G.chalN++;
+    if (G.chalN === 4) c = CHALLENGES.filter(function (k) { return k.fixed === 4; })[0] || null;
+    if (!c && G.forceNext) {
+      c = CHALLENGES.filter(function (k) { return k.name === G.forceNext; })[0] || null;
+      G.forceNext = null;
+    }
+    if (!c) {
+      var pool = CHALLENGES.filter(function (k) { return G.lastChal.indexOf(k.name) < 0 && !k.fixed; });
+      c = pool[Math.floor(Math.random() * pool.length)];
+    }
+    G.lastChal.push(c.name);
+    if (G.lastChal.length > 8) G.lastChal.shift();
+    var s = G.base, seed = (Math.random() * 4294967296) >>> 0;
+    makePlat(G.nextX + rnd(90, 0.45 * s + 22), 420, nextY(G.lastY, -30, 30));   // runway to read the banner
+    var x0 = G.nextX;
+    seededBuild(c, s, seed);
+    var x1 = G.nextX;
+    makePlat(G.nextX + rnd(90, 0.45 * s + 22), 440, nextY(G.lastY, -30, 30));   // landing pad
+    G.chals.push({ x0: x0, x1: x1, def: c, seed: seed, s: s, announced: false, done: false });
+  }
+  // TIME SKIP: wipe the course and rebuild the challenge she just cleared, right under her feet.
+  function doRewind() {
+    var r = G.rewind, y = P.ground ? clamp(Math.round(P.ground.y), 340, 470) : G.lastY;
+    G.rewind = null;
+    G.plats = []; G.spikes = []; G.coinList = []; G.meteors = []; G.zones = []; G.triggers = []; G.ceilings = []; G.chals = [];
+    G.flags = []; G.popups = []; G.markers = []; G.popupLeft = 0;
+    G.loading = null; G.credits = null; G.fakeOver = null; G.bsod = null; G.lag = 0;
+    G.mirror = 0; G.flip = 0; G.blindOn = false; G.blind = 0; G.scratchTarget = null;
+    music.cut = false; syncMusic();
+    G.nextX = -60; G.lastY = y;
+    var run = makePlat(-60, PX + 480, y);
+    P.ground = run; P.y = y - PH; P.vy = 0; P.onGround = true; P.air = 1; P.pose = null; P.lagQ = []; P.unstuck = false;
+    var x0 = G.nextX;
+    seededBuild(r.def, r.s, r.seed);
+    var x1 = G.nextX;
+    makePlat(G.nextX + rnd(90, 0.45 * r.s + 22), 440, nextY(G.lastY, -30, 30));
+    G.chals.push({ x0: x0, x1: x1, def: r.def, seed: r.seed, s: r.s, announced: true, done: false, repeat: true });
+    G.sinceChal = 0;
+    banner(r.def.decoy ? r.def.decoy[0] : r.def.name, 'AGAIN. THIS ONE COUNTS DOUBLE.', 'warn');
+  }
+
+  // position triggers: fire when she crosses x (optionally only when on the ground, giving up past `until`)
+  function trigger(x, fn, needGround, until) {
+    G.triggers.push({ x: x, fn: fn, needGround: !!needGround, until: until === undefined ? Infinity : until, done: false });
+  }
+  function forcePose() {
+    P.pose = { i: Math.floor(Math.random() * A.poses.length), t: 0 };
+    G.flash = 1;
+    sfx.shutter();
+    banner('SAY CHEESE!', 'She saw a camera.', 'clear');
+  }
+  function scratchStart(target) {
+    G.scratchTarget = target;
+    G.blindOn = true;
+    music.cut = true;
+    syncMusic();
+    sfx.scratch();
+  }
+  function scratchEnd() {
+    G.scratchTarget = null;
+    G.blindOn = false;
+    music.cut = false;
+    syncMusic();
+    sfx.drop();
+    puff(P.x + PW / 2, P.y + PH, 12, C.g7, 220, 90);
+  }
+
+  function inZone(type) {
+    var cx = P.x + PW / 2;
+    for (var i = 0; i < G.zones.length; i++) {
+      var z = G.zones[i];
+      if (z.type === type && cx > z.x0 && cx < z.x1) return true;
+    }
+    return false;
+  }
+  function inChallenge() {
+    for (var i = 0; i < G.chals.length; i++) {
+      var c = G.chals[i];
+      if (!c.done && c.x0 - 200 < P.x && P.x < c.x1 + 40) return true;
+    }
+    return false;
+  }
+  function banner(title, sub, kind) { G.banner = { title: S(title), sub: S(sub || ''), kind: kind, t: 0 }; }
+  function scoreNow() { return Math.floor(G.dist / 40) + G.coins * 10 + G.bonus; }
+
+  /* ---------- particles ---------- */
+  function puff(x, y, n, color, spread, up) {
+    for (var i = 0; i < n; i++) {
+      G.parts.push({
+        x: x, y: y,
+        vx: (Math.random() - 0.5) * spread - 20,
+        vy: -Math.random() * up,
+        g: 300, life: 0, max: 0.3 + Math.random() * 0.3,
+        s: 2 + Math.round(Math.random() * 2), c: color
+      });
+    }
+  }
+  function burst(x, y, n) {
+    var cols = [C.g7, C.g6, C.g5];
+    for (var i = 0; i < n; i++) {
+      var a = Math.random() * Math.PI * 2, sp = 120 + Math.random() * 300;
+      G.parts.push({
+        x: x, y: y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 80,
+        g: 600, life: 0, max: 0.6 + Math.random() * 0.5,
+        s: 3 + Math.round(Math.random() * 2), c: cols[i % 3]
+      });
+    }
+  }
+  function updateParticles(h, dx) {
+    var keep = [];
+    for (var i = 0; i < G.parts.length; i++) {
+      var p = G.parts[i];
+      p.life += h;
+      if (p.life >= p.max) continue;
+      p.x += p.vx * h - dx;
+      p.y += p.vy * h;
+      p.vy += p.g * h;
+      keep.push(p);
+    }
+    G.parts = keep;
+  }
+
+  /* ---------- simulation ---------- */
+  function overlap(ax, ay, aw, ah, bx, by, bw, bh) {
+    return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+  }
+
+  function hud() {
+    var sc = scoreNow();
+    if (sc !== shown.score) { shown.score = sc; elScore.textContent = sc; }
+    if (G.coins !== shown.coins) { shown.coins = G.coins; elCoins.textContent = G.coins; }
+  }
+
+  function step(h) {
+    if (G.bsod) { G.bsod.t += h; return; }                 // BLUE SCREEN: everything waits for a key
+    if (G.lag > 0) { G.lag -= h; return; }                  // LAG SPIKE: a real freeze
+    if (G.rewind) {                                         // TIME SKIP: wind the backdrop back, then rebuild
+      G.rewind.t += h; G.scroll -= 900 * h;
+      if (G.rewind.t >= 1.1) doRewind();
+      return;
+    }
+    G.t += h;
+    // Pose: brake to a stop and hold. Otherwise ease back up to full pace (she walks until she's fast enough to run).
+    if (P.pose) {
+      P.pose.t += h;
+      G.mul = Math.max(0, G.mul - 4 * h);
+      if (P.pose.t >= POSE_TIME || !P.onGround) P.pose = null;
+    } else {
+      G.mul = Math.min(1, G.mul + 0.8 * h);
+    }
+    var tz = inZone('turbo') ? 1.4 : 1;
+    G.turbo += clamp(tz - G.turbo, -1.2 * h, 1.5 * h);
+    G.base = Math.min(560, 300 + G.dist / 60);
+    G.speed = G.base * G.mul * G.turbo;
+    var dx = G.speed * h;
+    G.dist += dx; G.scroll += dx; G.nextX -= dx;
+    G.shake = Math.max(0, G.shake - h);
+    var i, p;
+    for (i = 0; i < G.plats.length; i++) {
+      p = G.plats[i];
+      p.x -= dx;
+      if (p.kind === 'mover') {
+        p.y = p.baseY + p.amp * Math.sin(G.t * p.freq * 6.283 + p.mph);
+      } else if (p.kind === 'ghost') {
+        p.solid = ((G.t + p.ph) % p.period) < p.on;
+      } else if (p.kind === 'crumble' && p.crumbleT >= 0) {
+        p.crumbleT += h;
+        if (p.crumbleT > 0.3) { p.fallV += 1600 * h; p.y += p.fallV * h; }
+      } else if (p.kind === 'shy') {
+        // decides once, when it is the next deck: run up to it and it backs off 160px; be airborne and it comes 40px closer
+        p.baseX -= dx;
+        var ahead = p.baseX - (P.x + PW);
+        if (p.shy === 'idle' && ahead > 0 && ahead < 1.2 * p.shyS) {
+          if (!P.onGround) p.shy = 'meet';
+          else if (ahead < 0.9 * Math.max(G.speed, 1) + 20) p.shy = 'flee';
+        }
+        var tgt = p.shy === 'flee' ? 160 : p.shy === 'meet' ? -40 : 0;
+        if (P.ground === p && P.onGround) tgt = p.off;
+        p.off += clamp(tgt - p.off, -500 * h, 500 * h);
+        p.x = p.baseX + p.off;
+      }
+    }
+    for (i = 0; i < G.spikes.length; i++) G.spikes[i].x -= dx;
+    for (i = 0; i < G.coinList.length; i++) {
+      var hc = G.coinList[i];
+      hc.x -= dx;
+      if (hc.flee && hc.drift < 240 && hc.x - (P.x + PW) < 140) { var mv = 230 * h; hc.x += mv; hc.drift += mv; hc.y -= 30 * h; }
+    }
+    for (i = 0; i < G.zones.length; i++) { G.zones[i].x0 -= dx; G.zones[i].x1 -= dx; }
+    for (i = 0; i < G.ceilings.length; i++) G.ceilings[i].x -= dx;
+    for (i = 0; i < G.triggers.length; i++) { G.triggers[i].x -= dx; G.triggers[i].until -= dx; }
+    G.ceilings = G.ceilings.filter(function (c) { return c.x + c.w > -100; });
+    for (i = 0; i < G.flags.length; i++) G.flags[i].x -= dx;
+    for (i = 0; i < G.markers.length; i++) G.markers[i].x -= dx;
+    G.flags = G.flags.filter(function (f) { return f.x > -60; });
+    G.markers = G.markers.filter(function (m) { return m.x > -60; });
+    // last run's death spot: a broken heart on whatever is there now, with a real heart above as bait
+    if (G.marker && !G.marker.placed && G.marker.wx - G.dist < W + 120) {
+      var mxp = G.marker.wx - G.dist, under = null;
+      G.marker.placed = true;
+      for (i = 0; i < G.plats.length; i++) {
+        var q = G.plats[i];
+        if (q.kind !== 'invisible' && q.x <= mxp && q.x + q.w >= mxp) under = q;
+      }
+      var myp = under ? under.y : G.lastY;
+      G.markers.push({ x: mxp, y: myp });
+      heart(mxp, myp - 120);
+    }
+    // pop-ups and the loading dialog
+    if (G.popupLeft > 0) { G.popupT -= h; if (G.popupT <= 0) { spawnPopup(); G.popupLeft--; G.popupT = 0.6; } }
+    for (i = 0; i < G.popups.length; i++) G.popups[i].t += h;
+    G.popups = G.popups.filter(function (q) { return q.t < q.life; });
+    if (G.loading) { G.loading.t += h; if (G.loading.t > 5.5) G.loading = null; }
+    G.plats = G.plats.filter(function (q) { return q.x + q.w > -80 && q.y < H + 80; });
+    G.spikes = G.spikes.filter(function (q) { return q.x + q.w > -80; });
+    G.coinList = G.coinList.filter(function (q) { return q.x > -40 && !q.got; });
+    G.zones = G.zones.filter(function (z) { return z.x1 > -100; });
+    while (G.nextX < W + 300) spawnNext();
+
+    // challenges: announce as they come into view, award the clear once she lands past the end
+    for (i = 0; i < G.chals.length; i++) {
+      var ch = G.chals[i];
+      ch.x0 -= dx; ch.x1 -= dx;
+      var d = ch.def;
+      if (!ch.announced && ch.x0 < W + 60) {
+        ch.announced = true;
+        if (!d.silent) { banner(d.decoy ? d.decoy[0] : d.name, d.decoy ? d.decoy[1] : d.hint, 'warn'); sfx.warn(); }
+      }
+      if (!ch.done && ch.x1 < P.x && P.onGround) {
+        ch.done = true;
+        if (d.quiet) { earnBadge(d.name); continue; }
+        if (!ch.repeat && !G.timeSkipUsed && G.cleared >= 2 && Math.random() < 0.5) {
+          G.timeSkipUsed = true;
+          G.rewind = { t: 0, def: d, seed: ch.seed, s: ch.s };
+          banner('OOPS.', "LET'S DO THAT AGAIN.", 'oops'); sfx.rewind();
+        } else {
+          var bonus = ch.repeat ? 200 : 100;
+          G.bonus += bonus; G.cleared++;
+          earnBadge(d.name);
+          banner(d.clearTitle || 'CLEAR!', '+' + bonus + '   ' + S(d.reveal || d.name), 'clear'); sfx.clear();
+        }
+      }
+    }
+    G.chals = G.chals.filter(function (c) { return !(c.done && c.x1 < -200); });
+    if (G.banner) { G.banner.t += h; if (G.banner.t > 2.6) G.banner = null; }
+
+    // position triggers
+    for (i = 0; i < G.triggers.length; i++) {
+      var tr = G.triggers[i];
+      if (tr.done || tr.x > P.x + PW / 2) continue;
+      if (!tr.needGround || P.onGround) { tr.done = true; tr.fn(); }
+      else if (tr.until < P.x) tr.done = true;
+    }
+    G.triggers = G.triggers.filter(function (t) { return !t.done; });
+
+    // troll effects
+    G.flip += clamp(G.mirror - G.flip, -2.5 * h, 2.5 * h);
+    G.blind += clamp((G.blindOn ? 1 : 0) - G.blind, -4 * h, 4 * h);
+    G.flash = Math.max(0, G.flash - 2.5 * h);
+    if (G.fakeOver) { G.fakeOver.t += h; if (G.fakeOver.t >= 3.4) { G.fakeOver = null; setMood('normal'); } }
+    if (G.credits) { G.credits.t += h; if (G.credits.t > (H + 80 + CREDITS.length * 46) / 110) G.credits = null; }
+
+    // meteors: warn, fall, burn
+    for (i = 0; i < G.meteors.length; i++) {
+      var m = G.meteors[i];
+      m.x -= dx;
+      if (m.state === 'idle') {
+        if (m.x - P.x < G.speed * 1.15 + 200) { m.state = 'warn'; m.t = 0; sfx.warn(); }
+      } else if (m.state === 'warn') {
+        m.t += h;
+        if (m.t >= 0.6) { m.state = 'fall'; m.t = 0; m.y = -40; }
+      } else if (m.state === 'fall') {
+        m.y += 1000 * h;
+        if (m.y >= m.deck - 12) {
+          m.state = 'burn'; m.t = 0;
+          if (!reduce) G.shake = Math.max(G.shake, 0.12);
+          puff(m.x, m.deck - 6, 10, C.g7, 220, 140);
+          sfx.land();
+        }
+      } else if (m.state === 'burn') {
+        m.t += h;
+        if (m.t >= 1.3) m.state = 'gone';
+      }
+    }
+    G.meteors = G.meteors.filter(function (m) { return m.x > -60 && m.state !== 'gone'; });
+
+    // fire embers
+    G.emberT -= h;
+    if (G.emberT <= 0) {
+      G.emberT = 0.07;
+      for (i = 0; i < G.spikes.length; i++) {
+        var f = G.spikes[i];
+        if (f.x < W && f.x + f.w > 0 && Math.random() < 0.6) {
+          G.parts.push({ x: f.x + Math.random() * f.w, y: f.y - 20, vx: -10 + Math.random() * 20, vy: -60 - Math.random() * 60, g: -20, life: 0, max: 0.6 + Math.random() * 0.5, s: 2, c: Math.random() < 0.5 ? C.g7 : C.g6 });
+        }
+      }
+    }
+
+    // INPUT LAG: queued presses and releases arrive 0.15 s late
+    while (P.lagQ.length && P.lagQ[0] <= G.t) { P.lagQ.shift(); P.buffer = 0.12; }
+    if (P.releaseAt && G.t >= P.releaseAt) { P.holding = false; P.releaseAt = 0; }
+
+    // jump input
+    if (P.buffer > 0) {
+      if (P.onGround || P.coyote > 0) {
+        P.pose = null;
+        var spring = P.ground && P.ground.kind === 'spring';
+        if (spring) sfx.boing();
+        P.vy = -JUMP * (inZone('lazy') ? 0.62 : 1) * (spring ? 1.45 : 1); P.onGround = false; P.coyote = 0; P.buffer = 0; P.airT = 0; P.landT = 0;
+        puff(P.x + PW / 2, P.y + PH, 5, C.g4, 80, 50);
+        sfx.jump();
+      } else if (P.air > 0 && !inZone('nodouble')) {
+        P.vy = -JUMP2 * (inZone('lazy') ? 0.62 : 1); P.air--; P.buffer = 0;
+        puff(P.x + PW / 2, P.y + PH, 8, C.g6, 120, 30);
+        sfx.jump2();
+      } else {
+        P.buffer -= h;
+      }
+    }
+    if (!P.holding && P.vy < -280) P.vy = -280;
+
+    // ride moving and falling platforms
+    if (P.onGround && P.ground) {
+      var gp = P.ground;
+      if (gp.solid !== false && gp.y < H + 80 && P.x + PW - 4 > gp.x && P.x + 4 < gp.x + gp.w) P.y = gp.y - PH;
+    }
+
+    // physics
+    P.vy = Math.min(1400, P.vy + GRAV * h);
+    var prevBottom = P.y + PH, wasGround = P.onGround, fallSpeed = P.vy;
+    P.y += P.vy * h;
+    var bottom = P.y + PH, landed = false, crashed = false;
+    for (i = 0; i < G.plats.length; i++) {
+      p = G.plats[i];
+      if (p.solid === false) continue;
+      if (P.x + PW - 4 > p.x && P.x + 4 < p.x + p.w) {
+        if (P.vy >= 0 && prevBottom <= p.y + 16 && bottom >= p.y) {
+          P.y = p.y - PH; P.vy = 0; landed = true; P.ground = p;
+          if (!wasGround) { G.lastSafe = p; G.lastSafeY = p.y; }
+          if (G.scratchTarget === p) scratchEnd();
+          if (p.kind === 'crumble' && p.crumbleT < 0) { p.crumbleT = 0; sfx.crack(); }
+        } else if (bottom > p.y + 16 && !(p.fallV > 0)) {
+          crashed = true;
+        }
+      }
+    }
+    if (landed) {
+      P.onGround = true; P.air = 1; P.coyote = 0.1;
+      if (!wasGround) {
+        P.landT = 0.14;
+        P.unstuck = false;
+        if (fallSpeed > 300) {
+          puff(P.x + PW / 2, P.y + PH, 8, C.g4, 140, 60);
+          sfx.land();
+        }
+      }
+    } else {
+      P.onGround = false;
+      P.coyote = Math.max(0, P.coyote - h);
+      P.airT += h;
+    }
+    P.landT = Math.max(0, P.landT - h);
+    P.yHist.push(P.y); if (P.yHist.length > 9) P.yHist.shift();
+    if (P.onGround) {
+      P.runT += h;
+      P.stepD += dx;
+      // run cycle: 10 frames per second, rising to 13 at top speed
+      P.runPh += h * (10 + 2 * clamp((G.speed - 300) / 260, 0, 1));   // 5-frame run at 10-12 fps
+      P.dustT -= h;
+      if (P.dustT <= 0 && G.speed > 120) { P.dustT = 0.09; puff(P.x + 4, P.y + PH, 1, C.g4, 30, 40); }
+    }
+
+    // hearts
+    for (i = 0; i < G.coinList.length; i++) {
+      var c = G.coinList[i];
+      if (c.got) continue;
+      if (overlap(P.x - 6, P.y - 4, PW + 12, PH + 8, c.x - 8, c.y - 8, 16, 16)) {
+        c.got = true; G.coins++;
+        puff(c.x, c.y, 6, C.g7, 140, 80);
+        sfx.coin();
+      }
+    }
+
+    // hazards
+    var hit = crashed || P.y > H + 60;
+    var bx = P.x + 4, by = P.y + 6, bw = PW - 8, bh = PH - 8;
+    for (i = 0; i < G.spikes.length && !hit; i++) {
+      var s = G.spikes[i];
+      if (overlap(bx, by, bw, bh, s.x + 6, s.y - 26, s.w - 12, 26)) hit = true;
+    }
+    for (i = 0; i < G.ceilings.length && !hit; i++) {
+      var cl = G.ceilings[i];
+      if (overlap(bx, by, bw, bh, cl.x + 4, cl.y - 60, cl.w - 8, 60)) hit = true;
+    }
+    for (i = 0; i < G.meteors.length && !hit; i++) {
+      var mt = G.meteors[i];
+      if (mt.state === 'fall' && overlap(bx, by, bw, bh, mt.x - 12, mt.y - 12, 24, 24)) hit = true;
+      if (mt.state === 'burn' && overlap(bx, by, bw, bh, mt.x - 10, mt.deck - 26, 20, 26)) hit = true;
+    }
+
+    updateParticles(h, dx);
+    hud();
+    if (hit) die();
+  }
+
+  /* ---------- state changes ---------- */
+  function tryPose() {
+    if (state !== 'play' || !P.onGround || P.pose || inChallenge()) return;
+    var list = A.poses, i;
+    do { i = Math.floor(Math.random() * list.length); } while (list.length > 1 && i === P.lastPose);
+    P.lastPose = i;
+    P.pose = { i: i, t: 0 };
+    for (var k = 0; k < 10; k++) {
+      var a = Math.random() * Math.PI * 2, r = 40 + Math.random() * 30;
+      G.parts.push({ x: P.x + PW / 2 + Math.cos(a) * r, y: P.y + 40 + Math.sin(a) * r, vx: 0, vy: -20, g: 0,
+                     life: 0, max: 0.5 + Math.random() * 0.5, s: Math.random() < 0.4 ? 3 : 2, c: Math.random() < 0.5 ? C.g7 : C.g6 });
+    }
+    sfx.pose();
+  }
+
+  function setState(s) {
+    state = s;
+    btnPose.disabled = s !== 'play';
+    btnPause.setAttribute('aria-disabled', s === 'play' ? 'false' : 'true');
+    btnPause.tabIndex = s === 'play' ? 0 : -1;
+    syncMusic();
+  }
+
+  function showOverlay(kind) {
+    ov.hidden = false;
+    ovKind = kind;
+    followPop.hidden = true;
+    ovBtn.style.transform = '';
+    badgeWall.hidden = kind !== 'over';
+    if (kind === 'over') { renderBadgeWall(); renderBoard(); showTab('board'); startBoardRefresh(); }
+    nameForm.hidden = kind !== 'ready';
+    if (kind !== 'ready') nameHint.hidden = true;
+    else { if (!nameIn.value) nameIn.value = playerName; if (!emailIn.value) emailIn.value = playerEmail; }
+    ovCont.hidden = !(kind === 'over' && G.contUsed < 2 && !G.outOfLove);
+    if (!ovCont.hidden) ovCont.href = CONT_LINKS[Math.floor(Math.random() * CONT_LINKS.length)];
+    ovLink.hidden = kind !== 'over';
+    ovTip.hidden = kind !== 'over';
+    ovBtn.classList.toggle('alt', kind === 'over');
+    if (kind === 'ready') {
+      ovTitle.textContent = 'N4IA LOVE U 4LL';
+      ovText.textContent = S(isTouch ? START_TOUCH : START_DESK);
+      ovStats.hidden = true;
+      ovBtn.textContent = S('GAME START');
+    } else if (kind === 'paused') {
+      ovTitle.textContent = 'Paused';
+      ovText.textContent = 'Press P or Space to carry on.';
+      ovStats.hidden = true;
+      ovBtn.textContent = 'Resume';
+      try { ovBtn.focus({ preventScroll: true }); } catch (e) {}
+    } else {
+      ovTitle.textContent = 'LOVE U 4LL';
+      ovText.textContent = G.outOfLove ? S("Sorry, out of love. Let's start again.") : S('Hearts collected: {n}', { n: G.coins });
+      ovScore.textContent = G.finalScore;
+      ovDist.textContent = Math.floor(G.dist / 40) + ' m';
+      ovCoins.textContent = G.coins;
+      ovClear.textContent = G.cleared;
+      ovStats.hidden = false;
+      ovBtn.textContent = retryLabel();
+      ovTip.textContent = tipLine() + '\n' + deathsLine();
+      try { ovBtn.focus({ preventScroll: true }); } catch (e) {}
+    }
+  }
+
+  function startGame() {
+    if (state === 'play' || !followPop.hidden || !emailWarn.hidden) return;
+    if (state === 'ready' && !takeName()) return;
+    if (state === 'over' && performance.now() - G.diedAt < 450) return;
+    lockLandscape();
+    newThisRun = {};
+    audio();
+    music.started = true;
+    setMood('normal');
+    loadMusic();
+    reset();
+    stopBoardRefresh();
+    board.runAt = Date.now();
+    setState('play');
+    ov.hidden = true;
+  }
+  function pauseGame() {
+    if (state !== 'play') return;
+    setState('paused');
+    showOverlay('paused');
+  }
+  function resumeGame() {
+    if (state !== 'paused' && state !== 'away') return;
+    G.away = null;
+    setState('play');
+    ov.hidden = true;
+  }
+  function togglePause() {
+    if (state === 'play') pauseGame();
+    else if (state === 'paused') resumeGame();
+  }
+
+  /* ---------- badges: one per challenge, kept in this browser ---------- */
+  var BADGE_KEY = 'n4ia-badges';
+  var earned = {}, newThisRun = {};
+  try { (JSON.parse(localStorage.getItem(BADGE_KEY) || '[]') || []).forEach(function (n) { earned[n] = 1; }); } catch (e) {}
+  function badgeCount() {
+    var n = 0;
+    for (var i = 0; i < CHALLENGES.length; i++) if (earned[CHALLENGES[i].name]) n++;
+    return n;
+  }
+  function updateBadgeHud() { elBadges.textContent = badgeCount() + '/' + CHALLENGES.length; }
+  function earnBadge(name) {
+    if (!earned[name]) {
+      earned[name] = 1; newThisRun[name] = 1;
+      try { localStorage.setItem(BADGE_KEY, JSON.stringify(Object.keys(earned))); } catch (e) {}
+    }
+    updateBadgeHud();
+  }
+  // 9x9 pixel icons, one per challenge
+  var ICONS = {
+    'ELEVATOR':        ['..#......', '.###.....', '#.#.#....', '..#...#..', '..#...#..', '..#...#..', '....#.#.#', '.....###.', '......#..'],
+    'TURBO RUSH':      ['.....###.', '....###..', '...###...', '..######.', '.....##..', '....##...', '...##....', '..##.....', '.#.......'],
+    'HEART TRAP':      ['.##...##.', '####.####', '#########', '.#######.', '..#####..', '...###...', '....#....', '.........', '#.#.#.#.#'],
+    'FAKE CLEAR':      ['........#', '.......##', '......##.', '#....##..', '##..##...', '.####....', '..##.....', '.........', '#.#.#.#.#'],
+    'FAKE GAME OVER':  ['.#######.', '#########', '##..#..##', '##..#..##', '#########', '.###.###.', '..#####..', '..#.#.#..', '.........'],
+    "DON'T JUMP":      ['..#####..', '.#.....#.', '#.#.....#', '#..#....#', '#...#...#', '#....#..#', '#.....#.#', '.#.....#.', '..#####..'],
+    'MIRROR MODE':     ['#.......#', '##.....##', '###...###', '####.####', '###...###', '##.....##', '#.......#', '....#....', '....#....'],
+    'CAMERA SHY':      ['.........', '..###....', '#########', '#...#...#', '#..#.#..#', '#..#.#..#', '#...#...#', '#########', '.........'],
+    'LAZY LEGS':       ['#####....', '...#.....', '..#......', '.#.......', '#####....', '.....###.', '......#..', '.....#...', '.....###.'],
+    'RECORD SCRATCH':  ['..#####..', '.##...##.', '##.###.##', '#.##.##.#', '#.#.#.#.#', '#.##.##.#', '##.###.##', '.##...##.', '..#####..'],
+    'THANK YOU FOR PLAYING': ['#########', '.........', '.#######.', '.........', '..#####..', '.........', '.#######.', '.........', '...###...'],
+    'BLUE SCREEN':     ['#########', '#.......#', '#.#...#.#', '#.......#', '#..###..#', '#.#...#.#', '#########', '...###...', '.#######.'],
+    'POP-UP HELL':     ['#####....', '#...#....', '#.#####..', '#.#...#..', '###.#####', '..#.#...#', '..###...#', '....#...#', '....#####'],
+    'LAG SPIKE':       ['#########', '.#.....#.', '..#...#..', '...#.#...', '....#....', '...#.#...', '..#.#.#..', '.#.###.#.', '#########'],
+    'FAKE LOADING':    ['.........', '#########', '#.......#', '#.#####.#', '#.#####.#', '#.......#', '#########', '.........', '#.#.#.#..'],
+    'INPUT LAG':       ['..#####..', '.#..#..#.', '#...#...#', '#...#...#', '#...###.#', '#.......#', '#.......#', '.#.....#.', '..#####..'],
+    'SPRING FLOOR':    ['#########', '..#####..', '.#.....#.', '..#####..', '.#.....#.', '..#####..', '.#.....#.', '..#####..', '#########'],
+    'STICKY SHOES':    ['..###....', '..###....', '..###....', '..####...', '..######.', '#########', '#########', '#.#.#.#.#', '.........'],
+    'SHY PLATFORM':    ['.........', '.###.###.', '#..##..##', '#..##..##', '.###.###.', '.........', '#########', '#.#.#.#.#', '.........'],
+    'FAKE CHECKPOINT': ['#####....', '#######..', '#######..', '#####....', '#........', '#........', '#........', '#........', '###......'],
+    'GREEDY HEARTS':   ['....##.##', '...######', '##.######', '...######', '##..####.', '.....##..', '##.......', '.........', '.........'],
+    'EASY MODE':       ['..#####..', '.#.....#.', '#..#.#..#', '#.......#', '#.#...#.#', '#..###..#', '.#.....#.', '..#####..', '.........'],
+    'METEOR RAIN':     ['#........', '.#.......', '..#..#...', '...#..#..', '....#.###', '.....####', '....#####', '.....###.', '.........']
+  };
+  var badgeArt = {};
+  function badgeURL(name, lit) {
+    var key = name + (lit ? '+' : '-');
+    if (badgeArt[key]) return badgeArt[key];
+    var u = 4, size = 48, c = document.createElement('canvas');
+    c.width = size; c.height = size;
+    var x = c.getContext('2d');
+    // octagon medal
+    function oct(inset, color) {
+      var a = 12 - inset * 0.4, s0 = inset, s1 = size - inset;
+      x.fillStyle = color; x.beginPath();
+      x.moveTo(s0 + a, s0); x.lineTo(s1 - a, s0); x.lineTo(s1, s0 + a); x.lineTo(s1, s1 - a);
+      x.lineTo(s1 - a, s1); x.lineTo(s0 + a, s1); x.lineTo(s0, s1 - a); x.lineTo(s0, s0 + a); x.closePath(); x.fill();
+    }
+    if (lit) { oct(0, C.g1); oct(2, C.g7); oct(4, C.g6); oct(7, C.g3); }
+    else { oct(0, '#2a3326'); oct(2, '#000000'); }
+    var icon = ICONS[name] || ICONS['EASY MODE'], ox = (size - 9 * u) / 2, oy = (size - 9 * u) / 2;
+    for (var r = 0; r < 9; r++) for (var q = 0; q < 9; q++) {
+      if (icon[r].charAt(q) !== '#') continue;
+      if (lit) { x.fillStyle = C.g1; x.fillRect(ox + q * u + 1, oy + r * u + 1, u, u); x.fillStyle = C.g7; }
+      else x.fillStyle = '#141a12';
+      x.fillRect(ox + q * u, oy + r * u, u, u);
+    }
+    return (badgeArt[key] = c.toDataURL());
+  }
+  function renderBadgeWall() {
+    wallCount.textContent = badgeCount() + '/' + CHALLENGES.length;
+    badgeGrid.innerHTML = '';
+    for (var i = 0; i < CHALLENGES.length; i++) {
+      var n = CHALLENGES[i].name, lit = !!earned[n];
+      var fig = document.createElement('figure');
+      fig.className = 'badge' + (lit ? ' lit' : '') + (newThisRun[n] ? ' new' : '');
+      var img = document.createElement('img');
+      img.src = badgeURL(n, lit); img.alt = lit ? S(n) : S('???'); img.width = 48; img.height = 48;
+      fig.title = lit ? S(n) : S('???');
+      fig.appendChild(img);
+      badgeGrid.appendChild(fig);
+    }
+  }
+
+  /* ---------- CONTINUE: open one of N4IA's pages, come back, prove you followed, respawn ---------- */
+  var CONT_LINKS = LINKS.continueLinks;
+  var FOLLOW = ['YES', 'SURE', 'YOU BET', 'I LIVE FOR HER', 'MY QUEEN'];
+  var contWait = null;
+  ovCont.addEventListener('click', function (e) {
+    if (state !== 'over' || G.contUsed >= 2 || G.outOfLove) { e.preventDefault(); return; }
+    // the link itself opens the page in a new tab; this records what to do on return
+    contWait = { stage: G.contUsed === 0 ? 'ask' : 'final', left: false };
+    G.contUsed++;
+    ovCont.blur();
+    setTimeout(function () { if (contWait && !contWait.left) contReturn(); }, 1500);   // the tab never opened
+  });
+  function contReturn() {
+    var c = contWait;
+    contWait = null;
+    if (!c || state !== 'over') return;
+    if (c.stage === 'ask') showFollow();
+    else { G.outOfLove = true; showOverlay('over'); }
+  }
+  function showFollow() {
+    ov.hidden = true;
+    followPop.hidden = false;
+    followBtns.innerHTML = '';
+    var used = [], order = FOLLOW.slice().sort(function () { return Math.random() - 0.5; });
+    order.forEach(function (label) {
+      var cell;
+      do { cell = Math.floor(Math.random() * 12); } while (used.indexOf(cell) >= 0);
+      used.push(cell);
+      var col = cell % 3, row = Math.floor(cell / 3);
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'primary follow-btn'; b.setAttribute('data-t', label); b.textContent = S(label);
+      b.style.left = (18 + col * 32 + (Math.random() * 8 - 4)) + '%';
+      b.style.top = (34 + row * 16 + Math.random() * 4) + '%';
+      b.addEventListener('click', followed);
+      followBtns.appendChild(b);
+    });
+    try { followBtns.firstChild.focus({ preventScroll: true }); } catch (e) {}
+  }
+  function followed() {
+    followPop.hidden = true;
+    doContinue();
+  }
+  function shiftWorld(d) {
+    var i, k, lists = [G.spikes, G.coinList, G.meteors, G.flags, G.markers, G.ceilings];
+    for (i = 0; i < G.plats.length; i++) { G.plats[i].x += d; if (G.plats[i].baseX !== undefined) G.plats[i].baseX += d; }
+    for (k = 0; k < lists.length; k++) for (i = 0; i < lists[k].length; i++) lists[k][i].x += d;
+    for (i = 0; i < G.zones.length; i++) { G.zones[i].x0 += d; G.zones[i].x1 += d; }
+    for (i = 0; i < G.chals.length; i++) { G.chals[i].x0 += d; G.chals[i].x1 += d; }
+    for (i = 0; i < G.triggers.length; i++) { G.triggers[i].x += d; G.triggers[i].until += d; }
+    G.nextX += d;
+  }
+  // respawn on the last deck she stood on, after a 3-2-1
+  function doContinue() {
+    var p = G.lastSafe || G.plats[0];
+    if (G.plats.indexOf(p) < 0) G.plats.unshift(p);
+    if (p.kind === 'crumble') { p.crumbleT = -1; p.fallV = 0; p.y = G.lastSafeY; }
+    if (p.kind === 'ghost') p.solid = true;
+    var spot = p.x + Math.max(0, Math.min(40, p.w - PW - 10));
+    for (var i = 0; i < G.spikes.length; i++) {           // step past a fire sitting on that spot
+      var f = G.spikes[i];
+      if (Math.abs(f.y - p.y) < 2 && f.x < spot + PW + 40 && f.x + f.w > spot - 10) spot = Math.min(f.x + f.w + 12, p.x + p.w - PW - 4);
+    }
+    shiftWorld(PX - spot);
+    G.meteors = G.meteors.filter(function (m) { return m.state === 'idle'; });
+    G.bsod = null; G.lag = 0; G.loading = null; G.popups = []; G.popupLeft = 0; G.rewind = null; G.fakeOver = null; G.credits = null;
+    G.blindOn = false; G.blind = 0; G.flash = 0; G.scratchTarget = null; music.cut = false;
+    P.y = p.y - PH; P.vy = 0; P.onGround = true; P.ground = p; P.air = 1; P.coyote = 0.1; P.pose = null; P.dead = false;
+    P.lagQ = []; P.releaseAt = 0; P.unstuck = false; P.yHist = []; P.buffer = 0; P.holding = false; P.landT = 0;
+    G.mul = 1; G.shake = 0; G.parts = []; G.banner = null;
+    G.cd = 3; G.cdLast = 4;
+    ov.hidden = true;
+    setMood('normal');
+    setState('countdown');
+  }
+  function drawCountdown() {
+    if (state !== 'countdown') return;
+    var n = Math.max(1, Math.ceil(G.cd)), f = G.cd - Math.floor(G.cd);
+    ctx.save();
+    ctx.fillStyle = 'rgba(5,12,6,0.45)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = Math.round(110 + 50 * f) + 'px ' + FONT_W98;
+    ctx.globalAlpha = 0.4 + 0.6 * f;
+    ctx.fillStyle = C.g7;
+    ctx.fillText(String(n), W / 2, H / 2 - 20);
+    ctx.restore();
+  }
+
+  /* ---------- language switch ---------- */
+  var ovKind = 'ready';
+  function keysHTML(t) {
+    var esc = t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return esc.replace(/\[([^\]]+)\]/g, '<kbd>$1</kbd>');
+  }
+  function applyLang() {
+    document.documentElement.lang = LANG;
+    var els = document.querySelectorAll('[data-t]');
+    for (var i = 0; i < els.length; i++) els[i].textContent = S(els[i].getAttribute('data-t'));
+    els = document.querySelectorAll('[data-tp]');
+    for (i = 0; i < els.length; i++) els[i].setAttribute('placeholder', S(els[i].getAttribute('data-tp')));
+    cv.setAttribute('aria-label', S(ARIA));
+    keysLine.innerHTML = keysHTML(S(isTouch ? KEYS_TOUCH : KEYS_DESK));
+    btnSound.textContent = S(soundOn ? 'Sound on' : 'Sound off');
+    for (i = 0; i < langBtns.length; i++) langBtns[i].setAttribute('aria-pressed', langBtns[i].getAttribute('data-lang') === LANG ? 'true' : 'false');
+    if (!ov.hidden) showOverlay(ovKind);
+    try { localStorage.setItem('n4ia-lang', LANG); } catch (e) {}
+  }
+  for (var li = 0; li < langBtns.length; li++) {
+    langBtns[li].addEventListener('click', function () { LANG = this.getAttribute('data-lang'); applyLang(); this.blur(); });
+  }
+
+  /* ---------- phones: landscape, tap-tap double jump, swipe-down pose ---------- */
+  var isTouch = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+  var isRot = false;
+  // If the phone is held upright, turn the whole game sideways so it always plays in landscape.
+  function layout() {
+    var portrait = window.innerHeight > window.innerWidth, root = document.documentElement;
+    isRot = isTouch && portrait;
+    root.classList.toggle('rot', isRot);
+    root.classList.toggle('touch', isTouch);
+    root.style.setProperty('--appW', (isRot ? window.innerHeight : window.innerWidth) + 'px');
+    root.style.setProperty('--appH', (isRot ? window.innerWidth : window.innerHeight) + 'px');
+  }
+  window.addEventListener('resize', layout);
+  window.addEventListener('orientationchange', function () { setTimeout(layout, 150); });
+  layout();
+  // Where the browser allows it (Android, fullscreen), also lock the real screen to landscape.
+  function lockLandscape() {
+    if (!isTouch) return;
+    try {
+      var el = document.documentElement;
+      var lock = function () { if (screen.orientation && screen.orientation.lock) return screen.orientation.lock('landscape'); };
+      if (el.requestFullscreen && !document.fullscreenElement) {
+        el.requestFullscreen({ navigationUI: 'hide' }).then(lock).catch(function () {});
+      } else {
+        var pr = lock(); if (pr && pr.catch) pr.catch(function () {});
+      }
+    } catch (e) {}
+  }
+  // A tap on the ground waits 70 ms to see whether it turns into a swipe down (pose) before it jumps.
+  // A tap in the air is the double jump, straight away.
+  var touch = { id: null, x: 0, y: 0, t: 0, pending: false, timer: 0, swiped: false };
+  function touchDown(e) {
+    touch.id = e.pointerId; touch.x = e.clientX; touch.y = e.clientY; touch.t = performance.now(); touch.swiped = false;
+    clearTimeout(touch.timer);
+    if (!P.onGround || G.bsod) { touch.pending = false; pressJump(); return; }
+    touch.pending = true;
+    touch.timer = setTimeout(function () { if (touch.pending) { touch.pending = false; pressJump(); } }, 70);
+  }
+  cv.addEventListener('pointermove', function (e) {
+    if (e.pointerType !== 'touch' || e.pointerId !== touch.id || touch.swiped) return;
+    var dx = e.clientX - touch.x, dy = e.clientY - touch.y;
+    var down = isRot ? -dx : dy, side = isRot ? dy : dx;      // the game is turned 90 degrees when the phone is upright
+    if (down > 26 && down > Math.abs(side) * 1.2 && performance.now() - touch.t < 450) {
+      touch.swiped = true;
+      if (touch.pending) { touch.pending = false; clearTimeout(touch.timer); } else releaseJump();
+      tryPose();
+    }
+  });
+  cv.addEventListener('pointerup', function (e) {
+    if (e.pointerType === 'touch' && e.pointerId === touch.id && touch.pending) {
+      touch.pending = false; clearTimeout(touch.timer); pressJump();
+    }
+  });
+
+  /* ---------- player name + leaderboard ----------
+     Shared board (published artifact with the db capability): one document per player at scores/<their id>,
+     holding their best score. Everyone who can open the page reads it; each player writes only their own.
+     Anywhere the shared board is not available (signed out, view-only visitors, the server copy),
+     scores are kept in a top-10 on this device instead. */
+  var NAME_KEY = 'n4ia-name', LOCAL_KEY = 'n4ia-board', EMAIL_KEY = 'n4ia-email';
+  function cleanName(v) {
+    return String(v || '').replace(/[\u0000-\u001f\u007f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 16);
+  }
+  var playerName = '', playerEmail = '';
+  try { playerName = cleanName(localStorage.getItem(NAME_KEY) || ''); } catch (e) {}
+  function validEmail(v) {
+    return typeof v === 'string' && v.length <= 254 &&
+      /^[A-Za-z0-9.!#$%&'*+\/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*\.[A-Za-z]{2,}$/.test(v);
+  }
+  try { var se = (localStorage.getItem(EMAIL_KEY) || '').trim(); if (validEmail(se)) playerEmail = se; } catch (e) {}
+  var board = { shared: false, rows: [], myId: null, ref: null, canWrite: true, myBest: 0, runAt: 0 };
+
+  // Online leaderboard for the web version: an HTTP API (see api/leaderboard.php) named in config.js.
+  var CFG = window.N4IA_CONFIG || {};
+  var API = typeof CFG.leaderboardApi === 'string' ? CFG.leaderboardApi.trim() : '';
+  var server = { on: !!API, ok: null, rows: [], timer: 0 };
+  var PID_KEY = 'n4ia-player';
+  // a random id for this device's player, so the server can keep one best score per player
+  function playerId() {
+    var id = '';
+    try { id = localStorage.getItem(PID_KEY) || ''; } catch (e) {}
+    if (!/^[A-Za-z0-9-]{8,64}$/.test(id)) {
+      id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+         : 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
+      try { localStorage.setItem(PID_KEY, id); } catch (e) {}
+    }
+    return id;
+  }
+  function apiGet() {
+    if (!server.on || !window.fetch) return;
+    var url = API + (API.indexOf('?') >= 0 ? '&' : '?') + 'limit=10&player=' + encodeURIComponent(playerId());
+    fetch(url, { headers: { Accept: 'application/json' }, cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (d) {
+        server.ok = true;
+        server.rows = (d && Array.isArray(d.rows) ? d.rows : []).slice(0, 10).map(function (r) {
+          return { name: cleanName(r && r.name) || '???', score: Math.max(0, Math.floor(Number(r && r.score) || 0)), me: !!(r && r.me) };
+        });
+        renderBoard();
+      })
+      .catch(function () { server.ok = false; renderBoard(); });
+  }
+  function apiPost(entry) {
+    if (!server.on || !window.fetch) return;
+    fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(entry) })
+      .then(function (r) { if (!r.ok && r.status !== 429) throw new Error('HTTP ' + r.status); })
+      .then(apiGet)
+      .catch(function () { server.ok = false; renderBoard(); });
+  }
+  function startBoardRefresh() {
+    stopBoardRefresh();
+    if (!server.on) return;
+    apiGet();
+    server.timer = setInterval(function () { if (state === 'over' && !ov.hidden) apiGet(); }, Math.max(5, Number(CFG.refreshSeconds) || 15) * 1000);
+  }
+  function stopBoardRefresh() { clearInterval(server.timer); server.timer = 0; }
+
+  function localRows() {
+    try { var a = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; }
+  }
+  // one entry per run on this device; a CONTINUE keeps updating the same entry
+  function saveLocal(name, score, at) {
+    var a = localRows().filter(function (r) { return r && r.at !== at; });
+    a.push({ name: name, score: score, at: at });
+    a.sort(function (x, y) { return (y.score || 0) - (x.score || 0); });
+    try { localStorage.setItem(LOCAL_KEY, JSON.stringify(a.slice(0, 20))); } catch (e) {}
+  }
+
+  function connectBoard() {
+    if (!window.claude || typeof window.claude.use !== 'function') return;
+    Promise.all([window.claude.use('db'), window.claude.use('user')]).then(function (r) {
+      var db = r[0], user = r[1];
+      if (!db) return;
+      board.shared = true;
+      db.collection('scores').orderBy('score', 'desc').limit(10).onSnapshot(function (snap) {
+        board.rows = snap.docs.map(function (d) {
+          var v = d.data() || {};
+          return { id: d.id, name: cleanName(v.name) || '???', score: Math.max(0, Math.floor(Number(v.score) || 0)) };
+        });
+        renderBoard();
+      }, function () { board.shared = false; renderBoard(); });
+      if (!user) { board.canWrite = false; renderBoard(); return; }
+      user.id().then(function (id) {
+        if (!id) { board.canWrite = false; renderBoard(); return; }
+        board.myId = id;
+        try { board.ref = db.collection('scores').doc(id); board.raceRef = db.collection('race').doc(id); } catch (e) { board.canWrite = false; renderBoard(); return; }
+        board.ref.get().then(function (s) { if (s.exists) board.myBest = Number((s.data() || {}).score) || 0; }).catch(function () {});
+        user.can('data.write').then(function (w) { if (w === false) { board.canWrite = false; renderBoard(); } });
+      });
+    }).catch(function () {});
+  }
+
+  // called when a run ends (each death; after a CONTINUE the same run keeps its entry)
+  function submitScore(score) {
+    var name = playerName || '???';
+    saveLocal(name, score, board.runAt);
+    // only players who gave an email take part in the leaderboard race (online / shared board)
+    if (!playerEmail) { renderBoard(); return; }
+    if (server.on) apiPost({ player_id: playerId(), name: name, email: playerEmail, score: score, hearts: G.coins, badges: badgeCount() });
+    if (board.ref && board.canWrite && score > board.myBest) {
+      var prev = board.myBest;
+      board.myBest = score;
+      // the email goes to race/<id>, which only the artifact's owner can read; scores/<id> is public
+      if (board.raceRef) board.raceRef.set({ name: name, email: playerEmail, score: score, at: new Date().toISOString() }).catch(function () {});
+      board.ref.set({ name: name, score: score, hearts: G.coins, badges: badgeCount(), at: new Date().toISOString() })
+        .catch(function (e) {
+          board.myBest = prev;
+          if (e && (e.code === 'invalid_argument' || e.code === 'not_granted' || e.code === 'revoked')) board.canWrite = false;
+          renderBoard();
+        });
+    }
+    renderBoard();
+  }
+
+  function renderBoard() {
+    var rows, note, mine;
+    if (server.on && server.ok !== false) {
+      rows = server.rows;
+      note = server.ok === null ? S('Loading leaderboard...') : S('Online leaderboard. Your best score is saved here.');
+      mine = function (r) { return r.me; };
+    } else if (board.shared) {
+      rows = board.rows;
+      note = board.canWrite ? S('Shared leaderboard. Your best score is saved here.')
+                            : S('Shared leaderboard. You can view it, but your scores are only saved on this device.');
+      mine = function (r) { return r.id && r.id === board.myId; };
+    } else {
+      rows = localRows().slice(0, 10).map(function (r) { return { name: cleanName(r.name) || '???', score: Math.floor(Number(r.score) || 0), at: r.at }; });
+      note = server.on ? S("Couldn't reach the leaderboard server. Your score is saved on this device only.") : S('Saved on this device only.');
+      mine = function (r) { return r.at === board.runAt; };
+    }
+    if (!playerEmail && (server.on || board.shared)) note = S('No email, so this run is not in the leaderboard race. It is saved on this device only.');
+    if (!rows.length && !(server.on && server.ok === null)) note = S('No scores yet. Be the first.') + ' ' + note;
+    boardBody.innerHTML = '';
+    for (var i = 0; i < rows.length; i++) {
+      var tr = document.createElement('tr');
+      if (mine(rows[i])) tr.className = 'me';
+      var a = document.createElement('td'); a.textContent = String(i + 1);
+      var b = document.createElement('td'); b.textContent = rows[i].name + (mine(rows[i]) ? ' (' + S('you') + ')' : '');
+      var c = document.createElement('td'); c.textContent = String(rows[i].score);
+      tr.appendChild(a); tr.appendChild(b); tr.appendChild(c);
+      boardBody.appendChild(tr);
+    }
+    boardNote.textContent = note;
+  }
+
+  function showTab(which) {
+    var isBoard = which === 'board';
+    boardPane.hidden = !isBoard; badgePane.hidden = isBoard;
+    tabBoard.setAttribute('aria-selected', isBoard ? 'true' : 'false');
+    tabBadges.setAttribute('aria-selected', isBoard ? 'false' : 'true');
+  }
+  tabBoard.addEventListener('click', function () { showTab('board'); });
+  tabBadges.addEventListener('click', function () { showTab('badges'); });
+
+  // name entry on the start screen
+  function takeName() {
+    var n = cleanName(nameIn.value);
+    if (!n) {
+      nameHint.textContent = S('Enter your name to start.');
+      nameHint.hidden = false;
+      try { nameIn.focus({ preventScroll: true }); } catch (e) {}
+      return false;
+    }
+    var em = emailIn.value.trim();
+    if (em && !validEmail(em)) { showEmailWarn(); return false; }
+    playerName = n;
+    playerEmail = em;
+    nameIn.value = n;
+    nameHint.hidden = true;
+    try { localStorage.setItem(NAME_KEY, n); localStorage.setItem(EMAIL_KEY, em); } catch (e) {}
+    return true;
+  }
+  function showEmailWarn() {
+    emailWarn.hidden = false;
+    try { emailWarnOk.focus({ preventScroll: true }); } catch (e) {}
+  }
+  function hideEmailWarn() {
+    emailWarn.hidden = true;
+    try { emailIn.focus({ preventScroll: true }); emailIn.select(); } catch (e) {}
+  }
+  emailWarnOk.addEventListener('click', hideEmailWarn);
+  emailWarn.addEventListener('keydown', function (e) { if (e.key === 'Escape' || e.key === 'Enter') { e.preventDefault(); hideEmailWarn(); } });
+  nameForm.addEventListener('submit', function (e) { e.preventDefault(); startGame(); });
+  [nameIn, emailIn].forEach(function (el) {
+    el.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); startGame(); } });
+  });
+
+  /* ---------- rage systems ---------- */
+  var sessionDeaths = 0, lastDeathWX = null;
+  var RETRY = ['LOVE U AGAIN', 'LOVE U AGAIN AGAIN', 'STILL LOVE U?', "IT'S NOT YOU, IT'S THE GAPS", 'ONE MORE. FOR REAL.', 'OK THIS IS THE ONE'];
+  var TIPS = ['Tip: Try not dying.', 'Tip: The hearts are not your friends.', 'Tip: Jump.', 'Tip: Have you tried not falling?',
+              'Tip: Every challenge can be cleared. Allegedly.', 'Tip: The banner might be lying. Or not.', 'Tip: Pausing is a trap.',
+              'Tip: Gravity is undefeated.', 'Tip: The gap was there the whole time.'];
+  function retryLabel() { return sessionDeaths <= RETRY.length ? S(RETRY[Math.max(0, sessionDeaths - 1)]) : S('LOVE U AGAIN (x{n})', { n: sessionDeaths }); }
+  function tipLine() {
+    if (G.sawCheckpoint && Math.random() < 0.6) return S('Tip: That checkpoint was decorative.');
+    return S(TIPS[Math.floor(Math.random() * TIPS.length)]);
+  }
+  function deathsLine() {
+    var r = sessionDeaths >= 50 ? "She's sitting down now. Take your time." :
+            sessionDeaths >= 25 ? 'She brought snacks. This could take a while.' :
+            sessionDeaths >= 10 ? "She's starting to worry about you." : '';
+    return S('Deaths this session: {n}.', { n: sessionDeaths }) + (r ? ' ' + S(r) : '');
+  }
+  var PAPION_URL = LINKS.pausePage;
+  function openPapion() {
+    try { var w = window.open(PAPION_URL, '_blank'); if (w) { try { w.opener = null; } catch (e) {} return; } } catch (e) {}
+    try {
+      var a = document.createElement('a');
+      a.href = PAPION_URL; a.target = '_blank'; a.rel = 'noopener';
+      document.body.appendChild(a); a.click(); a.remove();
+    } catch (e) {}
+  }
+  // PAUSE opens the PAPION channel. The game freezes; on return she is posing and waiting.
+  function goAway() {
+    if (state !== 'play') return;
+    G.away = { t: 0, left: false, back: false, pose: Math.floor(Math.random() * A.poses.length), poseT: 0 };
+    setState('away');
+  }
+  function setTitle(away) { try { document.title = away ? S('come back :(') : 'N4IA_LOVE_U_4LL'; } catch (e) {} }
+
+  function die() {
+    if (state !== 'play') return;
+    music.cut = false;
+    G.fakeOver = null; G.credits = null; G.blindOn = false; G.blind = 0; G.flash = 0; G.scratchTarget = null;
+    G.bsod = null; G.lag = 0; G.loading = null; G.popups = []; G.popupLeft = 0; G.rewind = null;
+    sessionDeaths++;
+    lastDeathWX = P.x + G.dist;
+    setState('over');
+    setMood('dark');
+    G.banner = null;
+    P.dead = true;
+    G.diedAt = performance.now();
+    sfx.hit();
+    if (!reduce) G.shake = 0.35;
+    burst(P.x + PW / 2, P.y + PH / 2, reduce ? 12 : 30);
+    var sc = scoreNow();
+    G.finalScore = sc;
+    submitScore(sc);
+    G.newBest = false;
+    if (sc > best) { best = sc; G.newBest = true; elBest.textContent = best; saveBest(); }
+    setTimeout(function () { if (state === 'over') showOverlay('over'); }, 500);
+  }
+
+  /* ---------- input ---------- */
+  function pressJump() {
+    if (state !== 'play') return;
+    if (G.bsod) { if (G.bsod.t < 0.3) return; G.bsod = null; }        // the key that closes the blue screen is a jump
+    if (G.fakeOver && G.fakeOver.t > 0.6) G.fakeOver.t = Math.max(G.fakeOver.t, 3.0);
+    if (inZone('sticky') && (P.onGround || P.coyote > 0) && !P.unstuck) {
+      P.unstuck = true; sfx.stuck(); puff(P.x + PW / 2, P.y + PH, 6, C.g5, 60, 20);
+      return;
+    }
+    if (inZone('lag')) { P.lagQ.push(G.t + 0.15); P.holding = true; P.releaseAt = 0; return; }
+    P.buffer = 0.12; P.holding = true;
+  }
+  function releaseJump() {
+    if (!P) return;
+    if (state === 'play' && G && inZone('lag')) P.releaseAt = G.t + 0.15;
+    else P.holding = false;
+  }
+  var bsodKey = null;
+  function isJumpKey(code) { return code === 'Space' || code === 'ArrowUp' || code === 'KeyW'; }
+  var lastDown = 0;
+
+  window.addEventListener('keydown', function (e) {
+    var code = e.code;
+    if (e.target && e.target.tagName === 'INPUT') return;   // typing a name; Enter submits the form
+    // BLUE SCREEN: any key continues, and that key works as a jump until it is released
+    if (state === 'play' && G.bsod && !isJumpKey(code)) {
+      e.preventDefault();
+      if (!e.repeat && G.bsod.t >= 0.3) { bsodKey = code; pressJump(); }
+      return;
+    }
+    if (code === 'ArrowDown' || code === 'KeyS') {
+      e.preventDefault();
+      if (e.repeat) return;
+      var now = performance.now();
+      if (now - lastDown < 350) { tryPose(); lastDown = 0; }
+      else lastDown = now;
+    } else if (isJumpKey(code)) {
+      e.preventDefault();
+      if (e.repeat) return;
+      if (state === 'play') pressJump();
+      else if (state === 'ready' || state === 'over') startGame();
+      else if (state === 'away') { if (G.away && G.away.back && G.away.t > 0.4) resumeGame(); }
+      else if (state === 'paused') resumeGame();
+    } else if (code === 'Enter') {
+      if (state === 'ready' || state === 'over') { e.preventDefault(); startGame(); }
+      else if (state === 'away') { e.preventDefault(); if (G.away && G.away.back && G.away.t > 0.4) resumeGame(); }
+      else if (state === 'paused') { e.preventDefault(); resumeGame(); }
+    } else if (code === 'KeyP' || code === 'Escape') {
+      if (state === 'play') { openPapion(); goAway(); }
+    } else if (code === 'KeyM') {
+      toggleSound();
+    }
+  });
+  window.addEventListener('keyup', function (e) {
+    if (isJumpKey(e.code)) releaseJump();
+    else if (bsodKey && e.code === bsodKey) { bsodKey = null; releaseJump(); }
+  });
+
+  cv.addEventListener('pointerdown', function (e) {
+    e.preventDefault();
+    if (state === 'away') { if (G.away && G.away.back && G.away.t > 0.4) resumeGame(); return; }
+    if (e.pointerType === 'touch' && state === 'play') { touchDown(e); return; }
+    pressJump();
+  });
+  window.addEventListener('pointerup', releaseJump);
+  window.addEventListener('pointercancel', releaseJump);
+  // Tapping anywhere starts or resumes. On the end screen only the buttons act, so the release link can be tapped safely.
+  ov.addEventListener('pointerdown', function (e) {
+    if (e.target === ovBtn || e.target === ovLink || (e.target.closest && e.target.closest('#nameForm, .badge-wall'))) return;
+    if (state === 'ready') startGame();
+    else if (state === 'paused') resumeGame();
+  });
+  ovBtn.addEventListener('click', function () {
+    if (state === 'ready' || state === 'over') startGame();
+    else if (state === 'paused') resumeGame();
+  });
+  // the link itself opens the channel in a new tab; the game just freezes
+  btnPause.addEventListener('click', function (e) {
+    if (state !== 'play') { e.preventDefault(); return; }
+    goAway();
+    btnPause.blur();
+  });
+  btnPose.addEventListener('click', function () { tryPose(); btnPose.blur(); });
+  // RUNAWAY BUTTON: on the real end screen, LOVE U AGAIN dodges the mouse twice per visit to the page.
+  // Touch and keyboard are never blocked.
+  var dodges = 2;
+  ovBtn.addEventListener('pointerenter', function (e) {
+    if (state !== 'over' || dodges <= 0 || e.pointerType !== 'mouse') return;
+    dodges--;
+    var mx = (Math.random() < 0.5 ? -1 : 1) * (90 + Math.random() * 80), my = (Math.random() < 0.5 ? -1 : 1) * (18 + Math.random() * 26);
+    ovBtn.style.transform = 'translate(' + Math.round(mx) + 'px,' + Math.round(my) + 'px)';
+  });
+  function toggleSound() {
+    soundOn = !soundOn;
+    btnSound.textContent = S(soundOn ? 'Sound on' : 'Sound off');
+    btnSound.setAttribute('aria-pressed', soundOn ? 'true' : 'false');
+    syncMusic();
+  }
+  btnSound.addEventListener('click', function () { toggleSound(); btnSound.blur(); });
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) {
+      if (contWait) contWait.left = true;
+      if (state === 'play') goAway();
+      if (G.away) G.away.left = true;
+      setTitle(true);
+    } else {
+      if (G.away) { G.away.back = true; G.away.t = Math.max(G.away.t, 0.8); }
+      if (contWait && contWait.left) contReturn();
+      setTitle(false);
+    }
+    syncMusic();
+  });
+
+  /* ---------- drawing ---------- */
+  // A broken section of elevated highway, drawn in the backdrop's style:
+  // walking deck, barrier with a rail, bright lip, riveted girder, lit pillars.
+  function drawPlatforms() {
+    for (var i = 0; i < G.plats.length; i++) {
+      var p = G.plats[i];
+      if (p.x > W + 10 || p.x + p.w < -10 || p.kind === 'invisible') continue;
+      var x = Math.round(p.x), y = Math.round(p.y), w = Math.round(p.w), k;
+      // ghost decks fade out (flickering just before), crumbling decks shake before they drop
+      var alpha = 1, shx = 0;
+      if (p.kind === 'ghost') {
+        var gph = (G.t + p.ph) % p.period;
+        alpha = p.solid ? ((p.on - gph < 0.3 && Math.floor(G.t * 16) % 2) ? 0.45 : 1) : 0.14;
+      }
+      if (p.kind === 'crumble' && p.crumbleT >= 0 && p.crumbleT < 0.3 && !reduce) shx = Math.round((Math.random() - 0.5) * 4);
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(shx, 0);
+
+      // underside
+      ctx.fillStyle = underGrad;
+      ctx.fillRect(x, y + 46, w, H - y);
+
+      // pillars
+      for (var px = p.pOff; px < w - 30; px += 170) {
+        var bx = x + px;
+        ctx.fillStyle = C.g1; ctx.fillRect(bx - 2, y + 46, 38, H - y);
+        ctx.fillStyle = C.g6; ctx.fillRect(bx, y + 46, 34, H - y);
+        ctx.fillStyle = C.g4; ctx.fillRect(bx + 2, y + 48, 30, H - y);
+        ctx.fillStyle = C.g3; ctx.fillRect(bx + 7, y + 70, 20, H - y);
+        ctx.fillStyle = C.g1;
+        ctx.fillRect(bx + 8, y + 54, 18, 2);
+        ctx.fillRect(bx + 8, y + 60, 18, 2);
+        ctx.fillStyle = C.g6;
+        ctx.fillRect(bx - 2, y + 66, 38, 2);
+      }
+
+      // riveted girder band
+      ctx.fillStyle = C.g1;
+      ctx.fillRect(x, y + 34, w, 12);
+      ctx.fillStyle = C.g4;
+      for (k = 6; k < w - 4; k += 12) ctx.fillRect(x + k, y + 39, 2, 2);
+
+      // barrier face
+      ctx.fillStyle = C.g4;
+      ctx.fillRect(x, y + 6, w, 26);
+      ctx.fillStyle = C.g6;
+      ctx.fillRect(x, y + 15, w, 2);
+      ctx.fillStyle = C.g2;
+      ctx.fillRect(x, y + 17, w, 2);
+      // barrier panel seams
+      ctx.fillStyle = C.g1;
+      for (k = 36; k < w; k += 72) ctx.fillRect(x + k, y + 6, 2, 26);
+      // cracks
+      ctx.fillStyle = C.g1;
+      for (k = 0; k < p.cracks.length; k++) {
+        var cx = x + p.cracks[k][0], d = p.cracks[k][1];
+        ctx.fillRect(cx, y + 8, 2, 5);
+        ctx.fillRect(cx + 2 * d, y + 13, 2, 6);
+        ctx.fillRect(cx + 4 * d, y + 19, 2, 5);
+        ctx.fillRect(cx + 2 * d, y + 24, 2, 5);
+      }
+
+      // bright lip under the barrier
+      ctx.fillStyle = C.g6;
+      ctx.fillRect(x, y + 32, w, 2);
+
+      // walking deck
+      ctx.fillStyle = C.g4;
+      ctx.fillRect(x, y, w, 6);
+      ctx.fillStyle = C.g7;
+      ctx.fillRect(x, y, w, 2);
+
+      // broken ends: dark bite and exposed rebar
+      ctx.fillStyle = C.g0;
+      ctx.fillRect(x, y, 2, 46);
+      ctx.fillRect(x + w - 2, y, 2, 46);
+      ctx.beginPath();
+      ctx.moveTo(x, y + 20); ctx.lineTo(x + 8, y + 30); ctx.lineTo(x + 3, y + 38); ctx.lineTo(x + 10, y + 46); ctx.lineTo(x, y + 46);
+      ctx.closePath(); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(x + w, y + 14); ctx.lineTo(x + w - 9, y + 24); ctx.lineTo(x + w - 4, y + 34); ctx.lineTo(x + w - 11, y + 46); ctx.lineTo(x + w, y + 46);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = C.g5;
+      for (k = 0; k < p.rebar.length; k++) {
+        ctx.fillRect(x - p.rebar[k][1], y + p.rebar[k][0], p.rebar[k][1], 2);
+        ctx.fillRect(x + w, y + p.rebar[k][0] + 4, p.rebar[k][1], 2);
+      }
+      // crumbling decks are visibly fractured, so a careful player can read them
+      if (p.kind === 'crumble') {
+        ctx.fillStyle = C.g1;
+        for (k = 12; k < w - 10; k += 26) {
+          ctx.fillRect(x + k, y + 1, 2, 5);
+          ctx.fillRect(x + k + 2, y + 6, 2, 9);
+          ctx.fillRect(x + k - 2, y + 15, 2, 10);
+          ctx.fillRect(x + k, y + 25, 2, 8);
+        }
+      }
+      // lifts get a pair of guide lights on the deck edge
+      if (p.kind === 'mover') {
+        ctx.fillStyle = Math.floor(G.t * 3) % 2 ? C.g7 : C.g5;
+        ctx.fillRect(x + 6, y + 8, 6, 6);
+        ctx.fillRect(x + w - 12, y + 8, 6, 6);
+      }
+      if (p.kind === 'spring') {
+        for (k = 18; k < w - 18; k += 40) {
+          ctx.fillStyle = C.g1; ctx.fillRect(x + k - 3, y - 12, 20, 5);
+          ctx.fillStyle = C.g7; ctx.fillRect(x + k - 2, y - 11, 18, 3);
+          ctx.fillStyle = C.g6; ctx.fillRect(x + k, y - 7, 14, 2); ctx.fillRect(x + k + 2, y - 4, 10, 2);
+        }
+      }
+      if (p.kind === 'shy') {
+        var look = p.shy === 'flee' ? 3 : p.shy === 'meet' ? -3 : 0;
+        ctx.fillStyle = C.g7;
+        ctx.fillRect(x + w / 2 - 14 + look, y + 18, 5, 5); ctx.fillRect(x + w / 2 + 9 + look, y + 18, 5, 5);
+        ctx.fillStyle = C.g5;
+        ctx.fillRect(x + w / 2 - 22, y + 26, 6, 2); ctx.fillRect(x + w / 2 + 16, y + 26, 6, 2);
+      }
+      ctx.restore();
+    }
+  }
+
+  // Green fire patches, built from stacked pixel rows like the flames in the backdrop.
+  function drawFires() {
+    for (var i = 0; i < G.spikes.length; i++) {
+      var s = G.spikes[i];
+      if (s.x > W + 10 || s.x + s.w < -10) continue;
+      var bx = Math.round(s.x), by = Math.round(s.y);
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      var gl = ctx.createRadialGradient(bx + s.w / 2, by - 10, 4, bx + s.w / 2, by - 10, s.w / 2 + 50);
+      gl.addColorStop(0, 'rgba(180,220,108,0.45)');
+      gl.addColorStop(1, 'rgba(180,220,108,0)');
+      ctx.fillStyle = gl;
+      ctx.fillRect(bx - 60, by - 90, s.w + 120, 120);
+      ctx.restore();
+      for (var u = 0; u < s.ph.length; u++) {
+        var ux = bx + u * 32 + 16;
+        var fl = reduce ? 0 : Math.sin(G.t * 14 + s.ph[u]) * 4;
+        var hgt = 32 + fl;
+        flame(ux, by, 15, hgt, C.g4);
+        flame(ux, by, 11, hgt * 0.78, C.g6);
+        flame(ux, by, 6, hgt * 0.5, C.g7);
+      }
+      ctx.fillStyle = C.g1;
+      ctx.fillRect(bx + 2, by - 3, s.w - 4, 3);
+    }
+  }
+  function flame(cx, base, half, hgt, color) {
+    ctx.fillStyle = color;
+    var rows = Math.max(2, Math.round(hgt / 4));
+    for (var r = 0; r < rows; r++) {
+      var t = r / rows;
+      var hw = Math.max(1, Math.round(half * (1 - t * t)));
+      var sway = reduce ? 0 : Math.round(Math.sin(G.t * 9 + r * 0.7 + cx) * t * 3);
+      ctx.fillRect(cx - hw + sway, base - (r + 1) * 4, hw * 2, 4);
+    }
+  }
+
+  // Hearts: a 7x6 pixel heart (3 units per pixel) with a dark outline and a highlight, pre-drawn once.
+  var HEART = ['.##.##.', '#######', '#######', '.#####.', '..###..', '...#...'];
+  var heartImg = (function () {
+    var u = 3, pad = 2, w = 7 * u + pad * 2, hh = 6 * u + pad * 2;
+    var c = document.createElement('canvas');
+    c.width = w * DPR; c.height = hh * DPR;
+    var x = c.getContext('2d');
+    x.scale(DPR, DPR);
+    function cells(color, grow) {
+      x.fillStyle = color;
+      for (var r = 0; r < HEART.length; r++)
+        for (var q = 0; q < 7; q++)
+          if (HEART[r][q] === '#') x.fillRect(pad + q * u - grow, pad + r * u - grow, u + grow * 2, u + grow * 2);
+    }
+    cells(C.g1, 2);
+    cells(C.g6, 0);
+    x.fillStyle = C.g7;
+    x.fillRect(pad + 1 * u, pad + 1 * u, u, u);
+    x.fillRect(pad + 2 * u, pad + 0 * u, u, u);
+    return { c: c, w: w, h: hh };
+  })();
+  function drawSparks() {
+    for (var i = 0; i < G.coinList.length; i++) {
+      var c = G.coinList[i];
+      if (c.got || c.x > W + 20 || c.x < -20) continue;
+      var cx = Math.round(c.x), cy = Math.round(c.y + (reduce ? 0 : Math.sin(G.t * 4 + c.ph) * 3));
+      var pulse = 0.5 + 0.5 * Math.sin(G.t * 6 + c.ph);
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      var gl = ctx.createRadialGradient(cx, cy, 2, cx, cy, 20);
+      gl.addColorStop(0, 'rgba(180,220,108,' + (0.25 + 0.2 * pulse).toFixed(3) + ')');
+      gl.addColorStop(1, 'rgba(180,220,108,0)');
+      ctx.fillStyle = gl;
+      ctx.fillRect(cx - 20, cy - 20, 40, 40);
+      ctx.restore();
+      var s = reduce ? 1 : 1 + 0.08 * pulse;
+      var dw = heartImg.w * s, dh = heartImg.h * s;
+      ctx.drawImage(heartImg.c, Math.round(cx - dw / 2), Math.round(cy - dh / 2), dw, dh);
+    }
+  }
+
+  function drawPlayer() {
+    if (P.dead || !hero.complete || !hero.naturalWidth) return;
+    // pick the frame: idle on menus, pose, landing crouch, jump arc, walk or run
+    var f, topAlign = false;
+    if (state === 'away' && G.away) {
+      f = A.poses[G.away.pose];
+    } else if (state !== 'play') {
+      f = A.idle[Math.floor(G.t * 10) % A.idle.length];
+    } else if (P.pose) {
+      f = A.poses[P.pose.i];
+    } else if (!P.onGround) {
+      var J = A.jump;
+      if (P.airT < 0.06) f = J[2];
+      else if (P.vy < -420) f = J[3];
+      else if (P.vy < -160) f = J[4];
+      else if (P.vy < 160) f = J[5];
+      else if (P.vy < 360) f = J[6];
+      else if (P.vy < 620) f = J[7];
+      else f = J[8];
+      topAlign = P.airT >= 0.06;
+    } else if (P.landT > 0) {
+      f = A.jump[P.landT > 0.07 ? 9 : 10];
+    } else if (G.speed < 190) {
+      f = A.walk[Math.floor(P.stepD / 12) % A.walk.length];
+    } else {
+      f = RUN[Math.floor(P.runPh) % RUN.length];
+    }
+    var fr = F[f], sw = fr[2] / 2, sh = fr[3] / 2, ax = fr[4] / 2, ay = fr[5] / 2;
+    var cx = P.x + PW / 2, feet = P.y + PH;
+
+    // ground glow, picks up the green from the scene
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    var gr = ctx.createRadialGradient(cx, P.y + 50, 6, cx, P.y + 50, 90);
+    gr.addColorStop(0, 'rgba(180,220,108,0.18)');
+    gr.addColorStop(1, 'rgba(180,220,108,0)');
+    ctx.fillStyle = gr;
+    ctx.fillRect(cx - 90, P.y - 40, 180, 180);
+    ctx.restore();
+
+    // in the air the head holds its height while the legs tuck, so align the sprite's top instead of its feet
+    var dy = topAlign ? feet - STAND_H : feet - ay;
+    ctx.drawImage(hero, fr[0], fr[1], fr[2], fr[3], Math.round(cx - ax), Math.round(dy), sw, sh);
+  }
+
+  // Meteors: a blinking target on the deck, then a falling block, then a short-lived fire.
+  function drawMeteors() {
+    for (var i = 0; i < G.meteors.length; i++) {
+      var m = G.meteors[i], mx = Math.round(m.x);
+      if (mx < -40 || mx > W + 40 || m.state === 'idle') continue;
+      if (m.state === 'warn' || m.state === 'fall') {
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.fillStyle = 'rgba(180,220,108,0.10)';
+        ctx.fillRect(mx - 14, 0, 28, m.deck);
+        ctx.restore();
+        if (m.state === 'fall' || Math.floor(G.t * 10) % 2 === 0) {
+          ctx.fillStyle = C.g7;
+          ctx.fillRect(mx - 16, m.deck - 3, 32, 3);
+          ctx.fillRect(mx - 2, m.deck - 30, 4, 14);
+          ctx.fillRect(mx - 2, m.deck - 12, 4, 4);
+        }
+      }
+      if (m.state === 'fall') {
+        var my = Math.round(m.y);
+        ctx.fillStyle = C.g4; ctx.fillRect(mx - 6, my - 60, 12, 48);
+        ctx.fillStyle = C.g6; ctx.fillRect(mx - 3, my - 40, 6, 28);
+        ctx.fillStyle = C.g1; ctx.fillRect(mx - 13, my - 13, 26, 26);
+        ctx.fillStyle = C.g6; ctx.fillRect(mx - 11, my - 11, 22, 22);
+        ctx.fillStyle = C.g7; ctx.fillRect(mx - 6, my - 6, 12, 12);
+      }
+      if (m.state === 'burn') {
+        var fade = m.t > 1.0 ? 1 - (m.t - 1.0) / 0.3 : 1;
+        var fl = reduce ? 0 : Math.sin(G.t * 14 + m.x) * 4;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, fade);
+        flame(mx, m.deck, 15, 34 + fl, C.g4);
+        flame(mx, m.deck, 11, (34 + fl) * 0.78, C.g6);
+        flame(mx, m.deck, 6, (34 + fl) * 0.5, C.g7);
+        ctx.restore();
+      }
+    }
+  }
+
+  // Zone gates: dashed lines at the start and end of no-double-jump and turbo stretches.
+  function drawZones() {
+    ctx.font = "16px W98Title, 'Courier New', monospace";
+    ctx.textBaseline = 'top';
+    ctx.textAlign = 'left';
+    for (var i = 0; i < G.zones.length; i++) {
+      var z = G.zones[i];
+      for (var j = 0; j < 2; j++) {
+        var zx = Math.round(j ? z.x1 : z.x0);
+        if (zx < -200 || zx > W + 10) continue;
+        ctx.fillStyle = 'rgba(228,246,166,0.35)';
+        for (var yy = 0; yy < H; yy += 12) ctx.fillRect(zx, yy, 2, 6);
+        var label = j ? S('END') + ' ' + S(z.label) : S(z.label);
+        var tw = ctx.measureText(label).width;
+        ctx.fillStyle = 'rgba(5,12,6,0.8)';
+        ctx.fillRect(zx + 4, 134, tw + 12, 24);
+        ctx.fillStyle = C.g7;
+        ctx.fillText(label, zx + 10, 138);
+      }
+    }
+  }
+
+  // Corner status while a zone rule is active.
+  function drawStatus() {
+    var msg = inZone('lag') ? S('INPUT LAG 0.15 s') : inZone('sticky') ? S('STICKY: PRESS TWICE') : inZone('lazy') ? S('TIRED: SHORT HOPS ONLY') : inZone('nodouble') ? S('DOUBLE JUMP OFF') : (G.turbo > 1.05 ? 'TURBO x' + G.turbo.toFixed(1) : '');
+    if (!msg || state !== 'play') return;
+    ctx.font = "16px W98Title, 'Courier New', monospace";
+    ctx.textBaseline = 'top';
+    ctx.textAlign = 'left';
+    var tw = ctx.measureText(msg).width;
+    ctx.fillStyle = 'rgba(5,12,6,0.8)';
+    ctx.fillRect(14, H - 40, tw + 16, 26);
+    ctx.fillStyle = Math.floor(G.t * 4) % 2 ? C.g7 : C.g6;
+    ctx.fillText(msg, 22, H - 35);
+  }
+
+  // Challenge banner across the top of the screen.
+  function drawBanner() {
+    var b = G.banner;
+    if (!b) return;
+    var a = Math.min(1, b.t / 0.15, (2.6 - b.t) / 0.4);
+    if (a <= 0) return;
+    var y = 22, bh = 96;
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.fillStyle = 'rgba(5,12,6,0.84)';
+    ctx.fillRect(0, y, W, bh);
+    ctx.fillStyle = b.kind === 'clear' ? C.g7 : C.g6;
+    ctx.fillRect(0, y, W, 2);
+    ctx.fillRect(0, y + bh - 2, W, 2);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    if (b.kind === 'warn') {
+      ctx.font = "500 13px 'DM Mono', monospace";
+      ctx.fillStyle = C.g5;
+      ctx.fillText(S('IMPOSSIBLE CHALLENGE'), W / 2, y + 10);
+    }
+    fitFont(b.title, 36, FONT_W98, W - 60);
+    ctx.fillStyle = C.g7;
+    ctx.fillText(b.title, W / 2, b.kind === 'warn' ? y + 28 : y + 16);
+    if (b.sub) {
+      fitFont(b.sub, 15, FONT_MONO, W - 60);
+      ctx.fillStyle = C.g6;
+      ctx.fillText(b.sub, W / 2, y + 70);
+    }
+    ctx.restore();
+  }
+
+  // Fire ceiling for DON'T JUMP: a girder with flames hanging down to just above her head.
+  function flameDown(cx, top, half, hgt, color) {
+    ctx.fillStyle = color;
+    var rows = Math.max(2, Math.round(hgt / 4));
+    for (var r = 0; r < rows; r++) {
+      var t = r / rows;
+      var hw = Math.max(1, Math.round(half * (1 - t * t)));
+      var sway = reduce ? 0 : Math.round(Math.sin(G.t * 9 + r * 0.7 + cx) * t * 3);
+      ctx.fillRect(cx - hw + sway, top + r * 4, hw * 2, 4);
+    }
+  }
+  function drawCeilings() {
+    for (var i = 0; i < G.ceilings.length; i++) {
+      var c = G.ceilings[i];
+      if (c.x > W + 10 || c.x + c.w < -10) continue;
+      var x = Math.round(c.x), w = Math.round(c.w), cy = Math.round(c.y), k;
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.fillStyle = 'rgba(180,220,108,0.10)';
+      ctx.fillRect(x, cy - 30, w, 60);
+      ctx.restore();
+      ctx.fillStyle = C.g1; ctx.fillRect(x, cy - 62, w, 34);
+      ctx.fillStyle = C.g3; ctx.fillRect(x, cy - 60, w, 28);
+      ctx.fillStyle = C.g6; ctx.fillRect(x, cy - 32, w, 2);
+      ctx.fillStyle = C.g4;
+      for (k = 6; k < w - 4; k += 12) ctx.fillRect(x + k, cy - 48, 2, 2);
+      for (k = 16; k < w - 8; k += 32) {
+        var fl = reduce ? 0 : Math.sin(G.t * 14 + k) * 3;
+        flameDown(x + k, cy - 30, 14, 28 + fl, C.g4);
+        flameDown(x + k, cy - 30, 10, (28 + fl) * 0.75, C.g6);
+        flameDown(x + k, cy - 30, 5, (28 + fl) * 0.45, C.g7);
+      }
+    }
+  }
+
+  // RECORD SCRATCH: a black curtain over the far side of the screen while the music is cut.
+  function drawBlind() {
+    if (G.blind <= 0.01) return;
+    var x0 = PX + 150;
+    ctx.save();
+    ctx.globalAlpha = G.blind;
+    var gr = ctx.createLinearGradient(x0 - 40, 0, x0 + 20, 0);
+    gr.addColorStop(0, 'rgba(5,12,6,0)');
+    gr.addColorStop(1, 'rgba(5,12,6,0.97)');
+    ctx.fillStyle = gr;
+    ctx.fillRect(x0 - 40, 0, 60, H);
+    ctx.fillStyle = 'rgba(5,12,6,0.97)';
+    ctx.fillRect(x0 + 20, 0, W - x0 - 20, H);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = "15px 'DM Mono', monospace";
+    ctx.fillStyle = Math.floor(G.t * 2) % 2 ? C.g5 : C.g3;
+    ctx.fillText(S('( silence )'), (x0 + 20 + W) / 2, H / 2);
+    ctx.restore();
+  }
+
+  // THANK YOU FOR PLAYING: fake credits scroll up a dark column over the course ahead.
+  var CREDITS = [
+    ['THANK YOU', 1], ['FOR PLAYING', 1], ['', 0], ['LOVE U 4LL', 1], ['PAPION', 0], ['OUT 23 OCT', 0], ['', 0],
+    ['STARRING   YOU', 0], ['DIRECTED BY   YOUR THUMBS', 0], ['SPECIAL THANKS   GRAVITY', 0], ['', 0],
+    ['...WAIT.', 0], ['YOU ARE STILL RUNNING?', 0]
+  ];
+  function drawCredits() {
+    if (!G.credits) return;
+    var t = G.credits.t, cx = Math.round(W * 0.64), cw = 420;
+    var a = Math.min(1, t / 0.4);
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.fillStyle = 'rgba(5,12,6,0.86)';
+    ctx.fillRect(cx - cw / 2, 0, cw, H);
+    ctx.fillStyle = C.g3;
+    ctx.fillRect(cx - cw / 2, 0, 2, H);
+    ctx.fillRect(cx + cw / 2 - 2, 0, 2, H);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    var y = H + 40 - t * 110;
+    for (var i = 0; i < CREDITS.length; i++, y += 46) {
+      if (y < -30 || y > H + 30 || !CREDITS[i][0]) continue;
+      var ct = S(CREDITS[i][0]);
+      fitFont(ct, CREDITS[i][1] ? 34 : 18, FONT_W98, cw - 30);
+      ctx.fillStyle = CREDITS[i][1] ? C.g7 : C.g6;
+      ctx.fillText(ct, cx, y);
+    }
+    ctx.restore();
+  }
+
+  // FAKE GAME OVER: a copy of the real end screen, see-through, while she keeps running.
+  function drawFakeOver() {
+    var f = G.fakeOver;
+    if (!f) return;
+    var a = Math.min(1, f.t / 0.35) * (f.t > 3.0 ? Math.max(0, 1 - (f.t - 3.0) / 0.4) : 1);
+    if (a <= 0) return;
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.fillStyle = 'rgba(5,12,6,0.58)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = "54px W98Title, 'Courier New', monospace";
+    ctx.fillStyle = C.g6;
+    ctx.fillText('LOVE U 4LL', W / 2, 150);
+    ctx.font = "16px 'DM Mono', monospace";
+    ctx.fillStyle = C.g7;
+    ctx.fillText(S('Hearts collected: {n}', { n: G.coins }), W / 2, 205);
+    ctx.font = "13px 'DM Mono', monospace";
+    ctx.fillStyle = C.g5;
+    ctx.fillText(S('SCORE {s}     DISTANCE {d} m     HEARTS {h}', { s: scoreNow(), d: Math.floor(G.dist / 40), h: G.coins }), W / 2, 238);
+    ctx.fillStyle = C.g6;
+    ctx.fillRect(W / 2 - 262, 270, 300, 48);
+    ctx.fillStyle = C.g3;
+    ctx.fillRect(W / 2 - 262, 318, 300, 4);
+    ctx.strokeStyle = C.g6; ctx.lineWidth = 2;
+    ctx.strokeRect(W / 2 + 56, 271, 206, 46);
+    ctx.font = "17px W98Title, 'Courier New', monospace";
+    ctx.fillStyle = C.g0;
+    ctx.fillText(S('LOVE U 4LL RELEASE 23 OCT'), W / 2 - 112, 294);
+    ctx.fillStyle = C.g6;
+    ctx.fillText(S('LOVE U AGAIN'), W / 2 + 159, 294);
+    if (f.t > 1.0 && Math.floor(G.t * 3) % 2) {
+      ctx.font = "15px W98Title, 'Courier New', monospace";
+      ctx.fillStyle = C.g7;
+      ctx.fillText(S('PRESS JUMP TO CONTINUE'), W / 2, 362);
+    }
+    ctx.restore();
+  }
+
+  // CAMERA SHY: the shutter flash.
+  function drawFlash() {
+    if (G.flash <= 0) return;
+    ctx.fillStyle = 'rgba(228,246,166,' + Math.min(0.9, G.flash).toFixed(3) + ')';
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  /* ---------- rage pack drawing ----------
+     The fake-computer screens break the green palette on purpose: grey Windows-98 boxes and a blue crash screen. */
+  var W98 = { face: '#c0c0c0', hi: '#ffffff', mid: '#808080', dark: '#000000', bar0: '#000080', bar1: '#1084d0', ink: '#000000' };
+  function w98Bevel(x, y, w, h, inset) {
+    ctx.fillStyle = W98.face; ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = inset ? W98.dark : W98.hi; ctx.fillRect(x, y, w, 2); ctx.fillRect(x, y, 2, h);
+    ctx.fillStyle = inset ? W98.hi : W98.dark; ctx.fillRect(x, y + h - 2, w, 2); ctx.fillRect(x + w - 2, y, 2, h);
+    ctx.fillStyle = W98.mid; ctx.fillRect(x + 2, y + h - 3, w - 4, 1); ctx.fillRect(x + w - 3, y + 2, 1, h - 4);
+  }
+  function w98Window(x, y, w, h, title) {
+    w98Bevel(x, y, w, h, false);
+    var g = ctx.createLinearGradient(x + 4, 0, x + w - 4, 0);
+    g.addColorStop(0, W98.bar0); g.addColorStop(1, W98.bar1);
+    ctx.fillStyle = g; ctx.fillRect(x + 4, y + 4, w - 8, 20);
+    ctx.font = "14px W98Title, 'Courier New', monospace";
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#ffffff'; ctx.fillText(title, x + 10, y + 14);
+    w98Bevel(x + w - 24, y + 7, 18, 15, false);
+    ctx.fillStyle = W98.ink;
+    for (var q = 0; q < 6; q++) { ctx.fillRect(x + w - 19 + q, y + 11 + q, 2, 1); ctx.fillRect(x + w - 14 - q, y + 11 + q, 2, 1); }
+  }
+  function w98Button(x, y, w, label) {
+    w98Bevel(x, y, w, 24, false);
+    ctx.font = "13px W98Title, 'Courier New', monospace";
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = W98.ink; ctx.fillText(label, x + w / 2, y + 12);
+  }
+
+  var POPUPS = [
+    ['Confirm Jump', 'Are you sure you want to jump?', ['Yes', 'No']],
+    ['Hearts.exe', 'Hearts.exe has stopped responding.', ['Close']],
+    ['Low Disk Space', 'You are running out of hearts on drive H:.', ['OK']],
+    ['Update Available', 'LOVE U 4LL v23.10 is ready to install.', ['Later']],
+    ['Gap.dll', 'The gap ahead is not responding.', ['Wait', 'End Now']],
+    ['Error', 'Task failed successfully.', ['OK']],
+    ['PAPION', 'LOVE U 4LL is out 23 Oct.', ['Remind me']],
+    ['Warning', 'Gravity is still enabled.', ['OK']]
+  ];
+  function spawnPopup() {
+    G.popups.push({ x: Math.round(rnd(W * 0.3, W - 330)), y: Math.round(rnd(60, 300)), k: Math.floor(Math.random() * POPUPS.length), t: 0, life: rnd(1.4, 2.2) });
+    sfx.ding();
+  }
+  function drawPopups() {
+    for (var i = 0; i < G.popups.length; i++) {
+      var p = G.popups[i], d = POPUPS[p.k], w = 310, h = 124;
+      var pop = Math.min(1, p.t / 0.08);
+      ctx.save();
+      ctx.globalAlpha = pop;
+      w98Window(p.x, p.y, w, h, S(d[0]));
+      // icon
+      ctx.fillStyle = '#ffd400';
+      ctx.beginPath(); ctx.moveTo(p.x + 30, p.y + 38); ctx.lineTo(p.x + 46, p.y + 66); ctx.lineTo(p.x + 14, p.y + 66); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = W98.ink; ctx.fillRect(p.x + 29, p.y + 46, 3, 11); ctx.fillRect(p.x + 29, p.y + 59, 3, 3);
+      ctx.font = "14px W98Title, 'Courier New', monospace";
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = W98.ink;
+      // wrap the message to the window
+      var words = S(d[1]).split(' '), line = '', lines = [];
+      for (var wi = 0; wi < words.length; wi++) {
+        var test = line ? line + ' ' + words[wi] : words[wi];
+        if (ctx.measureText(test).width > w - 74 && line) { lines.push(line); line = words[wi]; } else line = test;
+      }
+      lines.push(line);
+      for (var li = 0; li < lines.length; li++) ctx.fillText(lines[li], p.x + 58, p.y + 54 + (li - (lines.length - 1) / 2) * 17);
+      var bw = 86, total = d[2].length * bw + (d[2].length - 1) * 8, bx = p.x + (w - total) / 2;
+      for (var b = 0; b < d[2].length; b++) w98Button(bx + b * (bw + 8), p.y + h - 36, bw, S(d[2][b]));
+      ctx.restore();
+    }
+  }
+
+  // FAKE LOADING: a progress dialog stuck at 99%.
+  function drawLoading() {
+    var L = G.loading;
+    if (!L) return;
+    var w = 360, h = 132, x = Math.round(W / 2 - w / 2), y = 170;
+    var a = Math.min(1, L.t / 0.15) * (L.t > 5.2 ? Math.max(0, 1 - (L.t - 5.2) / 0.3) : 1);
+    ctx.save();
+    ctx.globalAlpha = a;
+    w98Window(x, y, w, h, S('Loading...'));
+    ctx.font = "14px W98Title, 'Courier New', monospace";
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillStyle = W98.ink;
+    ctx.fillText(S('Loading next area...'), x + 16, y + 42);
+    w98Bevel(x + 16, y + 56, w - 32, 22, true);
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(x + 18, y + 58, w - 36, 18);
+    var pct = Math.min(99, Math.floor(L.t / 0.8 * 99)), blocks = Math.floor((w - 40) / 12 * pct / 100);
+    ctx.fillStyle = W98.bar0;
+    for (var i = 0; i < blocks; i++) ctx.fillRect(x + 20 + i * 12, y + 60, 10, 14);
+    var mins = [4, 11, 2, 37, 1, 999][Math.floor(L.t / 0.9) % 6];
+    ctx.fillStyle = W98.ink;
+    ctx.fillText(pct + '%', x + 16, y + 98);
+    ctx.textAlign = 'right';
+    ctx.fillText(S('Estimated time remaining: {m} min', { m: mins }), x + w - 16, y + 98);
+    ctx.restore();
+  }
+
+  // LAG SPIKE: a "Not Responding" bar, a washed-out frame and an hourglass while the world is frozen.
+  function drawLag() {
+    if (!(G.lag > 0) || state !== 'play') return;
+    ctx.fillStyle = 'rgba(255,255,255,0.28)';
+    ctx.fillRect(0, 0, W, H);
+    var g = ctx.createLinearGradient(0, 0, W, 0);
+    g.addColorStop(0, '#808080'); g.addColorStop(1, '#b5b5b5');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, 24);
+    ctx.font = "14px W98Title, 'Courier New', monospace";
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#ffffff';
+    ctx.fillText(S('LOVE U 4LL (Not Responding)'), 10, 12);
+    // hourglass
+    var hx = W / 2, hy = H / 2;
+    ctx.fillStyle = W98.ink;
+    ctx.fillRect(hx - 12, hy - 18, 24, 3); ctx.fillRect(hx - 12, hy + 15, 24, 3);
+    ctx.beginPath(); ctx.moveTo(hx - 9, hy - 15); ctx.lineTo(hx + 9, hy - 15); ctx.lineTo(hx + 2, hy); ctx.lineTo(hx + 9, hy + 15); ctx.lineTo(hx - 9, hy + 15); ctx.lineTo(hx - 2, hy); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#ffd400';
+    ctx.beginPath(); ctx.moveTo(hx - 6, hy - 12); ctx.lineTo(hx + 6, hy - 12); ctx.lineTo(hx, hy - 3); ctx.closePath(); ctx.fill();
+    ctx.fillRect(hx - 5, hy + 10, 10, 3);
+  }
+
+  // BLUE SCREEN
+  function drawBSOD() {
+    if (!G.bsod) return;
+    ctx.fillStyle = '#0000aa';
+    ctx.fillRect(0, 0, W, H);
+    ctx.textBaseline = 'middle';
+    ctx.font = "20px W98Title, 'Courier New', monospace";
+    var title = ' LOVE U 4LL ', tw = ctx.measureText(title).width;
+    ctx.fillStyle = '#aaaaaa'; ctx.fillRect(W / 2 - tw / 2 - 4, 122, tw + 8, 28);
+    ctx.fillStyle = '#0000aa'; ctx.textAlign = 'center'; ctx.fillText(title, W / 2, 137);
+    ctx.fillStyle = '#ffffff'; ctx.textAlign = 'left';
+    var lines = [
+      'A fatal exception 0E has occurred at 0023:4LL1023 in VXD',
+      'GAP(01) + 00000023. The current run will be terminated.',
+      '',
+      '*  Press any key to continue.',
+      '*  Any key you press will be remembered.',
+      ''
+    ];
+    for (var i = 0; i < lines.length; i++) { var bl = S(lines[i]); fitFont(bl, 20, FONT_W98, W - 300); ctx.fillText(bl, 150, 196 + i * 30); }
+    ctx.font = '20px ' + FONT_W98;
+    ctx.textAlign = 'center';
+    ctx.fillText(S('Press any key to continue') + ' ' + (Math.floor(performance.now() / 500) % 2 ? '_' : ' '), W / 2, 400);
+  }
+
+  // TIME SKIP: tape rewind effect while the world winds back.
+  function drawRewind() {
+    if (!G.rewind) return;
+    ctx.fillStyle = 'rgba(228,246,166,0.08)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(5,12,6,0.5)';
+    for (var i = 0; i < 6; i++) ctx.fillRect(0, Math.round((G.rewind.t * 900 + i * 97) % H), W, 3);
+    ctx.font = "34px W98Title, 'Courier New', monospace";
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillStyle = Math.floor(G.rewind.t * 6) % 2 ? C.g7 : C.g5;
+    ctx.fillText(S('<< REWIND'), 30, 136);
+  }
+
+  // Checkpoint flags and last-death markers live in the world.
+  function drawFlags() {
+    for (var i = 0; i < G.flags.length; i++) {
+      var f = G.flags[i], x = Math.round(f.x), y = Math.round(f.y);
+      if (x < -40 || x > W + 40) continue;
+      ctx.fillStyle = C.g1; ctx.fillRect(x - 1, y - 74, 5, 74);
+      ctx.fillStyle = C.g6; ctx.fillRect(x, y - 72, 3, 72);
+      var fy = f.raised ? y - 72 : y - 26;
+      ctx.fillStyle = C.g1; ctx.fillRect(x + 2, fy - 1, 36, 24);
+      ctx.fillStyle = f.raised ? C.g7 : C.g5; ctx.fillRect(x + 3, fy, 34, 22);
+      ctx.fillStyle = C.g1;
+      ctx.fillRect(x + 12, fy + 11, 3, 3); ctx.fillRect(x + 15, fy + 14, 3, 3); ctx.fillRect(x + 18, fy + 11, 3, 3);
+      ctx.fillRect(x + 21, fy + 8, 3, 3); ctx.fillRect(x + 24, fy + 5, 3, 3);
+    }
+  }
+  function drawMarkers() {
+    for (var i = 0; i < G.markers.length; i++) {
+      var m = G.markers[i], x = Math.round(m.x), y = Math.round(m.y);
+      if (x < -40 || x > W + 40) continue;
+      ctx.save();
+      ctx.globalAlpha = 0.6;
+      ctx.drawImage(heartImg.c, x - heartImg.w / 2, y - 14 - heartImg.h / 2, heartImg.w, heartImg.h);
+      ctx.restore();
+      ctx.fillStyle = C.g0;
+      ctx.fillRect(x - 1, y - 24, 3, 4); ctx.fillRect(x + 1, y - 20, 3, 4); ctx.fillRect(x - 1, y - 16, 3, 4); ctx.fillRect(x + 1, y - 12, 3, 4);
+      ctx.font = "11px 'DM Mono', monospace";
+      ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.fillStyle = C.g5;
+      ctx.fillText(S('you died here'), x, y - 30);
+    }
+  }
+
+  // INPUT LAG: a faint copy of her trails 0.15 s behind.
+  function drawLagGhost() {
+    if (state !== 'play' || !inZone('lag') || !P.yHist.length) return;
+    var sx = P.x, sy = P.y;
+    P.x = PX - G.speed * 0.15; P.y = P.yHist[0];
+    ctx.save();
+    ctx.globalAlpha = 0.3;
+    drawPlayer();
+    ctx.restore();
+    P.x = sx; P.y = sy;
+  }
+
+  // Pause opened the PAPION channel. On return, she is posing and waiting.
+  function drawAway() {
+    if (state !== 'away' || !G.away) return;
+    var a = G.away, y = 22, bh = 96;
+    var title = S(!a.back ? 'brb, watching PAPION...' : (a.left ? "oh. you're back." : 'still here? fine.'));
+    ctx.save();
+    ctx.fillStyle = 'rgba(5,12,6,0.84)';
+    ctx.fillRect(0, y, W, bh);
+    ctx.fillStyle = C.g6; ctx.fillRect(0, y, W, 2); ctx.fillRect(0, y + bh - 2, W, 2);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    fitFont(title, 36, FONT_W98, W - 60);
+    ctx.fillStyle = C.g7; ctx.fillText(title, W / 2, y + 16);
+    if (a.back && Math.floor(G.t * 2) % 2 === 0) {
+      ctx.font = "15px W98Title, 'Courier New', monospace";
+      ctx.fillStyle = C.g6; ctx.fillText(S('PRESS JUMP TO CONTINUE'), W / 2, y + 64);
+    }
+    ctx.restore();
+  }
+
+  function drawParticles() {
+    for (var i = 0; i < G.parts.length; i++) {
+      var p = G.parts[i];
+      ctx.globalAlpha = 1 - p.life / p.max;
+      ctx.fillStyle = p.c;
+      ctx.fillRect(Math.round(p.x), Math.round(p.y), p.s, p.s);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function render() {
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+    var sx = 0, sy = 0;
+    if (G.shake > 0 && !reduce) {
+      var m = G.shake * 30;
+      sx = (Math.random() - 0.5) * m;
+      sy = (Math.random() - 0.5) * m;
+    }
+    ctx.save();
+    ctx.translate(sx, sy);
+    // MIRROR MODE: flip the world like a card turning over
+    var fx = 1 - 2 * G.flip;
+    if (fx !== 1) {
+      fx = (fx < 0 ? -1 : 1) * Math.max(0.02, Math.abs(fx));
+      ctx.translate(W / 2, 0); ctx.scale(fx, 1); ctx.translate(-W / 2, 0);
+    }
+    drawBackground();
+    drawZones();
+    drawPlatforms();
+    drawFlags();
+    drawMarkers();
+    drawFires();
+    drawCeilings();
+    drawMeteors();
+    drawSparks();
+    drawLagGhost();
+    drawPlayer();
+    drawParticles();
+    ctx.restore();
+    drawBlind();
+    drawCredits();
+    drawFakeOver();
+    drawLoading();
+    drawPopups();
+    drawStatus();
+    drawBanner();
+    drawLag();
+    drawRewind();
+    drawBSOD();
+    drawFlash();
+    drawAway();
+    drawCountdown();
+  }
+
+  /* ---------- main loop ---------- */
+  var last = 0, acc = 0;
+  function frame(ts) {
+    var dt = Math.min(0.05, (ts - last) / 1000 || 0);
+    last = ts;
+    if (state === 'play') {
+      acc += dt;
+      while (acc >= STEP) {
+        step(STEP);
+        acc -= STEP;
+        if (state !== 'play') { acc = 0; break; }
+      }
+    } else {
+      G.t += dt;
+      if (state === 'countdown') {
+        G.cd -= dt;
+        var cn = Math.max(0, Math.ceil(G.cd));
+        if (cn < G.cdLast) { G.cdLast = cn; if (cn > 0) sfx.coin(); }
+        if (G.cd <= 0) { setState('play'); banner('GO!', '', 'clear'); sfx.clear(); }
+      }
+      if (state === 'away' && G.away) {
+        var aw = G.away;
+        aw.t += dt; aw.poseT += dt;
+        if (aw.poseT > 1.6) { aw.poseT = 0; aw.pose = Math.floor(Math.random() * A.poses.length); }
+        if (!aw.left && aw.t > 0.8) aw.back = true;      // the tab never opened, or they never left
+      }
+      if (state === 'over') {
+        updateParticles(dt, 0);
+        G.shake = Math.max(0, G.shake - dt);
+      }
+    }
+    render();
+    requestAnimationFrame(frame);
+  }
+
+  reset();
+  try { if (document.fonts) document.fonts.load("36px W98Title"); } catch (e) {}
+  setState('ready');
+  showOverlay('ready');
+  applyLinks();
+  updateBadgeHud();
+  applyLang();
+  renderBoard();
+  connectBoard();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
